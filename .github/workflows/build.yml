@@ -1,0 +1,61 @@
+name: build
+
+# Builds Charm and keeps the APK as an artifact.
+#
+# Deliberately manual. A Chromium build costs hours of runner time and produces
+# nothing new unless the pinned revision, the patch series or the configuration
+# changed, so it runs when asked rather than on every push.
+#
+# The work itself lives in tools/, so the same two commands run unchanged on a
+# build machine over SSH. This workflow only prepares a machine and calls them.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # The free runner is 4 vCPU / 16 GB RAM / 14 GB of disk. Chromium does not
+    # fit in 14 GB, so on a standard runner this fails at the fetch stage. Move
+    # it by changing this label alone; nothing else needs to change. See
+    # docs/build.md.
+    runs-on: ubuntu-latest
+
+    # Above the 6-hour ceiling GitHub-hosted runners impose, so that a larger
+    # runner configured for a long build is not cut off. On a standard runner
+    # the job fails on disk long before this matters.
+    timeout-minutes: 360
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Recover disk before anything else. Chromium's tree plus its build output
+      # does not coexist with the software a runner image ships with, and this
+      # step is the difference between starting and not starting. What is
+      # removed here is software this job never invokes.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
+                     /usr/local/lib/android /usr/local/lib/heroku \
+                     /opt/hostedtoolcache "$AGENT_TOOLSDIRECTORY"
+          df -h /
+
+      # Host dependencies are not installed here on purpose. Chromium ships
+      # install-build-deps.sh, which knows the package list for the host it runs
+      # on. A hand-written list in a workflow goes stale the moment a
+      # distribution renames a package, and did.
+      - name: Materialize source tree
+        run: ./tools/materialize.sh
+
+      - name: Build
+        run: ./tools/build.sh
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: charm-apk
+          path: charm-src/out/**/apks/*.apk
+          if-no-files-found: warn

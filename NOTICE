@@ -1,0 +1,16 @@
+Charm
+Copyright (c) 2026 Charm contributors
+
+This product includes modifications to Chromium source code.
+
+Chromium
+Copyright (c) The Chromium Authors
+Licensed under the BSD 3-Clause License.
+https://chromium.googlesource.com/chromium/src/+/main/LICENSE
+
+The patch files under patches/ are derived from Chromium source and remain
+subject to that license.
+
+A Charm build also contains Chromium's bundled third-party components, each
+under its own license. Those are enumerated in the browser itself under
+about:credits, which is the authoritative list for any given build.

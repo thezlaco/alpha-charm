@@ -1,0 +1,101 @@
+# Charm build configuration.
+#
+# This file is the whole configuration. Nothing device-specific, no version
+# numbers: a build from it runs on whatever Android supports, and keeps working
+# as Android moves on.
+#
+# docs/decisions.md explains the reasoning behind the groups below, and records
+# the flags that look like they should be here but must not be.
+
+# --- Target -------------------------------------------------------------
+
+target_os = "android"
+
+# arm64 only, and no second ABI. A build-time choice rather than a property of
+# Charm; docs/decisions.md covers turning 32-bit back on, which costs about
+# another doubling of native build time.
+target_cpu = "arm64"
+build_apk_secondary_abi = false
+
+# The target that makes the experimental Desktop Android build, and so the
+# reason there is an extensions system to expose. Stated rather than left to the
+# default so an upstream change to the default cannot silently drop extension
+# support.
+is_desktop_android = true
+
+# android_default_min_sdk_version is deliberately unset. Left alone, the package
+# installs on everything Chromium supports, which is what keeps a Charm build
+# working as Android moves forward. Raising it trims compatibility code out of
+# the build; do that when targeting one known fleet of devices, not by default.
+
+# --- Release build ------------------------------------------------------
+#
+# Not about speed alone: is_debug=false drops assertions, and the symbol
+# settings below are the largest single consumer of disk and link time in a
+# Chromium build. None of them ship in the APK.
+
+is_debug = false
+is_official_build = true
+is_java_debug = false
+is_component_build = false
+dcheck_always_on = false
+android_static_analysis = "off"
+
+# Blink accounts for roughly half of Chromium's debug symbols on its own.
+symbol_level = 0
+blink_symbol_level = 0
+v8_symbol_level = 0
+
+# Distributed execution points at Google infrastructure unreachable from
+# outside, so leaving it on stalls the build waiting for it.
+use_remoteexec = false
+use_reclient = false
+
+# --- Identity -----------------------------------------------------------
+
+# The application id. Android treats this as the app's identity: changing it
+# later produces a second install rather than an update, so it is set once.
+chrome_public_manifest_package = "zlaco.charm"
+
+# --- Media --------------------------------------------------------------
+
+# H.264 and AAC, so video from ordinary sites plays without a separate codec
+# extension.
+proprietary_codecs = true
+ffmpeg_branding = "Chrome"
+
+# --- Google services ----------------------------------------------------
+
+# Field trials let the browser follow a server-supplied experiment instead of
+# the defaults compiled into the code. Turning the testing config off keeps
+# behaviour in the binary rather than on a server, and is also what stops a
+# remote feature flag from switching extension support off after the fact.
+disable_fieldtrial_testing_config = true
+
+# The rest switch off Google-owned subsystems that have no server to talk to in
+# an unbranded build, so they are dead weight in the binary. Verified against a
+# known-good build of the pinned revision; see docs/decisions.md for why each is
+# here and which were rejected as unsafe.
+
+use_mlkit_for_aicore = false
+enable_glic_internal_resources = false
+enable_reporting = false
+enable_service_discovery = false
+enable_mdns = false
+
+# --- Deliberately not set -----------------------------------------------
+#
+# enable_arcore, enable_cardboard and enable_openxr all look like free wins and
+# are not. enable_vr is derived from them:
+#
+#     enable_vr = enable_openxr || enable_cardboard || enable_arcore || ...
+#
+# and an Android build needs ENABLE_VR for reasons unrelated to VR: the omnibox
+# declares GetVectorIcon behind
+#
+#     #if (!BUILDFLAG(IS_ANDROID) || BUILDFLAG(ENABLE_VR)) && !BUILDFLAG(IS_IOS)
+#
+# Switching the backends off therefore breaks omnibox compilation rather than
+# removing anything. Turning them off needs a source change guarding those call
+# sites first, which is worth doing and is not worth doing in the same step as
+# everything else here.
