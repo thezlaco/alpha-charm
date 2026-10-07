@@ -134,5 +134,7 @@ always yields the same source. To move forward: fetch the new upstream revision
 into this tree, read what changed underneath our commits, and fix our commits so
 they apply to the new code.
 
-Current revision: `ac9b84a0b3`, Chromium 153, 2 September 2026. The reasoning
-for pinning rather than tracking a branch is in `docs/decisions.md`.
+Current revision: `ac9b84a0b3`, Chromium 153, 2 September 2026. Pinning rather
+than tracking a branch is what makes a given commit always yield the same
+source: the tree in this repository is the source of record, so a revision that
+moves under it would change what a commit means.

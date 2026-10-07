@@ -20,8 +20,8 @@ jobs:
   build:
     # The free runner is 4 vCPU / 16 GB RAM / 14 GB of disk. Chromium does not
     # fit in 14 GB, so on a standard runner this fails at the fetch stage. Move
-    # it by changing this label alone; nothing else needs to change. See
-    # docs/build.md.
+    # it by changing this label alone; nothing else needs to change. What a
+    # build actually costs is in the table in README.md.
     runs-on: ubuntu-latest
 
     # Above the 6-hour ceiling GitHub-hosted runners impose, so that a larger

@@ -4,16 +4,16 @@
 # numbers: a build from it runs on whatever Android supports, and keeps working
 # as Android moves on.
 #
-# docs/decisions.md explains the reasoning behind the groups below, and records
-# the flags that look like they should be here but must not be.
+# Each group below carries the reasoning for its own flags, and the flags that
+# look like they should be here but must not be are recorded at the end.
 
 # --- Target -------------------------------------------------------------
 
 target_os = "android"
 
 # arm64 only, and no second ABI. A build-time choice rather than a property of
-# Charm; docs/decisions.md covers turning 32-bit back on, which costs about
-# another doubling of native build time.
+# Charm. Turning 32-bit back on costs about another doubling of native build
+# time.
 target_cpu = "arm64"
 build_apk_secondary_abi = false
 
@@ -74,8 +74,7 @@ disable_fieldtrial_testing_config = true
 
 # The rest switch off Google-owned subsystems that have no server to talk to in
 # an unbranded build, so they are dead weight in the binary. Verified against a
-# known-good build of the pinned revision; see docs/decisions.md for why each is
-# here and which were rejected as unsafe.
+# known-good build of the pinned revision.
 
 use_mlkit_for_aicore = false
 enable_glic_internal_resources = false
