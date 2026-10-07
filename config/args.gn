@@ -33,11 +33,17 @@ is_desktop_android = true
 # Not about speed alone: is_debug=false drops assertions, and the symbol
 # settings below are the largest single consumer of disk and link time in a
 # Chromium build. None of them ship in the APK.
+#
+# is_component_build compiles the native side in parts rather than as one
+# object, which is the only lever left on how much disk a build needs. Disk is
+# the binding constraint on a build machine rather than a preference, so it is
+# on. The APK is still named ChromePublic and still installs as the same
+# application id; what changes is how the native code reached it.
 
 is_debug = false
 is_official_build = true
 is_java_debug = false
-is_component_build = false
+is_component_build = true
 dcheck_always_on = false
 android_static_analysis = "off"
 

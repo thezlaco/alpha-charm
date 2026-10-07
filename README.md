@@ -96,8 +96,15 @@ Chromium is large. Measured, not quoted:
 | RAM | 32 GB recommended; linking is what needs it |
 | CPU time | several hours |
 
-GitHub's free runners give 4 vCPU, 16 GB of RAM and 14 GB of disk, short of all
-three, so the included workflow needs a larger runner to finish.
+The disk figure was measured before `is_component_build` was turned on, and
+component build is what reduces it, so treat that row as the worst case rather
+than as the current cost. Re-measure it on a build machine and correct the
+number here.
+
+GitHub's free runners give 4 vCPU, 16 GB of RAM and 14 GB of disk. Disk was the
+one component build was turned on to address; whether that is now enough is a
+measurement this table has not had yet, and the included workflow still names a
+runner to change.
 
 ### Host dependencies
 
