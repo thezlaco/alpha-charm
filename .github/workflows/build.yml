@@ -30,18 +30,24 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - uses: actions/checkout@v4
-
-      # Recover disk before anything else. Chromium's tree plus its build output
-      # does not coexist with the software a runner image ships with, and this
-      # step is the difference between starting and not starting. What is
-      # removed here is software this job never invokes.
+      # Recover disk before anything else, including the checkout. This
+      # repository is 5.5 GB across 509 570 files, so the checkout itself needs
+      # room; freeing space after it would mean freeing it once the disk is
+      # already full. What is removed here is software this job never invokes.
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
                      /usr/local/lib/android /usr/local/lib/heroku \
                      /opt/hostedtoolcache "$AGENT_TOOLSDIRECTORY"
           df -h /
+
+      # A shallow clone, stated rather than left to the default: the history of
+      # an imported Chromium tree is large and this job builds a checkout, not a
+      # commit. persist-credentials is off because nothing here pushes.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
 
       # Host dependencies are not installed here on purpose. Chromium ships
       # install-build-deps.sh, which knows the package list for the host it runs
