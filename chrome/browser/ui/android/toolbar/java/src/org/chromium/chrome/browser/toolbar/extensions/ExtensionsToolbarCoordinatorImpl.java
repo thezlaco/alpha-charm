@@ -110,32 +110,30 @@ public class ExtensionsToolbarCoordinatorImpl
     private @Nullable Runnable mOnFeatureRemoved;
 
     @Override
-    public void initializeWithNative(ExtensionsToolbarInitParams params) {
-        Context context = params.context;
-        ChromeAndroidTask task = params.task;
-        Profile profile = params.profile;
-        WindowAndroid windowAndroid = params.windowAndroid;
-        TabModelSelector tabModelSelector = params.tabModelSelector;
-        ViewGroup rootView = params.rootView;
-        NullableObservableSupplier<Tab> currentTabSupplier = params.currentTabSupplier;
-        TabCreator tabCreator = params.tabCreator;
-        ThemeColorProvider themeColorProvider = params.themeColorProvider;
-        ModalDialogManager modalDialogManager = params.modalDialogManager;
-
-        final ContextMenuPopulatorFactory contextMenuPopulatorFactory =
-                params.contextMenuPopulatorFactory;
-        final SelectionDropdownMenuDelegate selectionDropdownMenuDelegate =
-                params.selectionDropdownMenuDelegate;
-
+    public void initializeWithNative(
+            Context context,
+            ViewStub extensionsToolbarStub,
+            WindowAndroid windowAndroid,
+            ChromeAndroidTask task,
+            Profile profile,
+            NullableObservableSupplier<Tab> currentTabSupplier,
+            TabCreator tabCreator,
+            ThemeColorProvider themeColorProvider,
+            ViewGroup rootView,
+            @Nullable ContextMenuPopulatorFactory contextMenuPopulatorFactory,
+            @Nullable SelectionDropdownMenuDelegate selectionDropdownMenuDelegate,
+            TabModelSelector tabModelSelector,
+            ModalDialogManager modalDialogManager,
+            @Nullable Runnable onFeatureRemoved) {
+        mBridge = new ExtensionActionsBridge(task, profile);
         mWindowAndroid = windowAndroid;
         mProfile = profile;
-        mCurrentTabSupplier = params.currentTabSupplier;
-        mOnFeatureRemoved = params.onFeatureRemoved;
+        mCurrentTabSupplier = currentTabSupplier;
+        mOnFeatureRemoved = onFeatureRemoved;
 
-        mBridge = new ExtensionActionsBridge(task, profile);
+        extensionsToolbarStub.setLayoutResource(R.layout.extensions_toolbar_container);
+        mContainer = (LinearLayout) extensionsToolbarStub.inflate();
 
-        params.extensionsToolbarStub.setLayoutResource(R.layout.extensions_toolbar_container);
-        mContainer = (LinearLayout) params.extensionsToolbarStub.inflate();
         mExtensionsToolbarBridge = new ExtensionsToolbarBridge(task, profile);
         mExtensionsToolbarBridge.addObserver(mExtensionsToolbarBridgeObserver);
 
@@ -365,16 +363,31 @@ public class ExtensionsToolbarCoordinatorImpl
     }
 
     private void showIphInternalHelper(Activity activity, View anchorView, Handler handler) {
+        requestIph(
+                activity,
+                anchorView,
+                handler,
+                new IphCommandBuilder(
+                        anchorView.getContext().getResources(),
+                        FeatureConstants.IPH_EXTENSIONS_MANAGE_TOOLBAR_FEATURE,
+                        R.string.extensions_menu_manage_toolbar_iph,
+                        R.string.extensions_menu_manage_toolbar_iph));
+    }
+
+    /**
+     * Shows an in-product help bubble anchored to {@code anchorView}.
+     *
+     * <p>The bubbles this toolbar shows differ only in the command built for them. The anchor, the
+     * orientation and the inset were written out once per bubble, and two copies of one set of
+     * layout settings are free to drift apart.
+     */
+    private void requestIph(
+            Activity activity, View anchorView, Handler handler, IphCommandBuilder command) {
         UserEducationHelper userEducationHelper =
                 new UserEducationHelper(activity, mProfile, handler);
 
         userEducationHelper.requestShowIph(
-                new IphCommandBuilder(
-                                anchorView.getContext().getResources(),
-                                FeatureConstants.IPH_EXTENSIONS_MANAGE_TOOLBAR_FEATURE,
-                                R.string.extensions_menu_manage_toolbar_iph,
-                                R.string.extensions_menu_manage_toolbar_iph)
-                        .setAnchorView(anchorView)
+                command.setAnchorView(anchorView)
                         .setPreferredHorizontalOrientation(
                                 HorizontalOrientation.MAX_AVAILABLE_SPACE)
                         .setHorizontalOverlapAnchor(true)
@@ -430,22 +443,15 @@ public class ExtensionsToolbarCoordinatorImpl
 
     private void showPinnedByDefaultIphInternalHelper(
             Activity activity, View anchorView, Handler handler) {
-        UserEducationHelper userEducationHelper =
-                new UserEducationHelper(activity, mProfile, handler);
-
-        userEducationHelper.requestShowIph(
+        requestIph(
+                activity,
+                anchorView,
+                handler,
                 new IphCommandBuilder(
-                                anchorView.getContext().getResources(),
-                                FeatureConstants.IPH_EXTENSIONS_PINNED_BY_DEFAULT_FEATURE,
-                                R.string.extensions_pinned_by_default_iph_body,
-                                R.string.extensions_pinned_by_default_iph_body)
-                        .setAnchorView(anchorView)
-                        .setPreferredHorizontalOrientation(
-                                HorizontalOrientation.MAX_AVAILABLE_SPACE)
-                        .setHorizontalOverlapAnchor(true)
-                        .setRemoveArrow(true)
-                        .setInsetRect(new Rect())
-                        .build());
+                        anchorView.getContext().getResources(),
+                        FeatureConstants.IPH_EXTENSIONS_PINNED_BY_DEFAULT_FEATURE,
+                        R.string.extensions_pinned_by_default_iph_body,
+                        R.string.extensions_pinned_by_default_iph_body));
     }
 
     private void saveMenuButtonPinState(boolean pinned) {
