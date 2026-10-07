@@ -47,8 +47,13 @@ jobs:
       # install-build-deps.sh, which knows the package list for the host it runs
       # on. A hand-written list in a workflow goes stale the moment a
       # distribution renames a package, and did.
-      - name: Materialize source tree
-        run: ./tools/materialize.sh
+      - name: Install host dependencies
+        run: ./build/install-build-deps.sh --no-prompt android
+
+      # depot_tools is not a host package, so install-build-deps.sh does not
+      # bring it. It carries gn and autoninja, which tools/build.sh needs.
+      - name: Install depot_tools
+        run: git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
 
       - name: Build
         run: ./tools/build.sh
@@ -57,5 +62,5 @@ jobs:
         if: always()
         with:
           name: charm-apk
-          path: charm-src/out/**/apks/*.apk
+          path: out/**/apks/*.apk
           if-no-files-found: warn
