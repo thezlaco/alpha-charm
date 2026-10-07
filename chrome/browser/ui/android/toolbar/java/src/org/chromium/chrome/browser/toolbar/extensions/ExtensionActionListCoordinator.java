@@ -55,36 +55,18 @@ public class ExtensionActionListCoordinator implements Destroyable {
     private boolean mIsDragging;
 
     public ExtensionActionListCoordinator(
-            Context context,
+            ExtensionActionListParams params,
             ExtensionActionListRecyclerView container,
-            WindowAndroid windowAndroid,
-            ChromeAndroidTask task,
-            Profile profile,
-            NullableObservableSupplier<Tab> currentTabSupplier,
-            ExtensionsToolbarBridge extensionsToolbarBridge,
-            ViewGroup rootView,
-            @Nullable ContextMenuPopulatorFactory contextMenuPopulatorFactory,
-            @Nullable SelectionDropdownMenuDelegate selectionDropdownMenuDelegate,
-            TabModelSelector tabModelSelector,
-            ModalDialogManager modalDialogManager) {
+            ViewGroup rootView) {
+        Context context = params.context;
+
         mContext = context;
         mContainer = container;
 
         mModels = new ModelList();
         mMediator =
                 new ExtensionActionListMediator(
-                        context,
-                        windowAndroid,
-                        mModels,
-                        task,
-                        profile,
-                        currentTabSupplier,
-                        mRecyclerViewDelegate,
-                        extensionsToolbarBridge,
-                        contextMenuPopulatorFactory,
-                        selectionDropdownMenuDelegate,
-                        tabModelSelector,
-                        modalDialogManager);
+                        params, mModels, mRecyclerViewDelegate);
 
         ExtensionsToolbarDragTouchHandler dragTouchHandler =
                 new ExtensionsToolbarDragTouchHandler(context, mModels);

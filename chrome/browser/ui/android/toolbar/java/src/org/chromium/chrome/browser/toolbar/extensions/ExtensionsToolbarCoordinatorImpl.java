@@ -145,18 +145,19 @@ public class ExtensionsToolbarCoordinatorImpl
 
         mExtensionActionListCoordinator =
                 new ExtensionActionListCoordinator(
-                        context,
+                        new ExtensionActionListParams(
+                                context,
+                                windowAndroid,
+                                task,
+                                profile,
+                                currentTabSupplier,
+                                mExtensionsToolbarBridge,
+                                contextMenuPopulatorFactory,
+                                selectionDropdownMenuDelegate,
+                                tabModelSelector,
+                                modalDialogManager),
                         mContainer.findViewById(R.id.extension_action_list),
-                        windowAndroid,
-                        task,
-                        profile,
-                        currentTabSupplier,
-                        mExtensionsToolbarBridge,
-                        rootView,
-                        contextMenuPopulatorFactory,
-                        selectionDropdownMenuDelegate,
-                        tabModelSelector,
-                        modalDialogManager);
+                        rootView);
         mToolbarModel = new PropertyModel.Builder(ExtensionsToolbarProperties.ALL_KEYS).build();
         mMenuButtonChangeProcessor =
                 PropertyModelChangeProcessor.create(

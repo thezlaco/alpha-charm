@@ -174,18 +174,20 @@ class ExtensionActionListMediator implements Destroyable {
     private @Nullable Integer mAvailableWidthForPinnedActions;
 
     public ExtensionActionListMediator(
-            Context context,
-            WindowAndroid windowAndroid,
+            ExtensionActionListParams params,
             ModelList models,
-            ChromeAndroidTask task,
-            Profile profile,
-            NullableObservableSupplier<Tab> currentTabSupplier,
-            ExtensionActionListCoordinator.RecyclerViewDelegate recyclerViewDelegate,
-            ExtensionsToolbarBridge extensionsToolbarBridge,
-            @Nullable ContextMenuPopulatorFactory contextMenuPopulatorFactory,
-            @Nullable SelectionDropdownMenuDelegate selectionDropdownMenuDelegate,
-            TabModelSelector tabModelSelector,
-            ModalDialogManager modalDialogManager) {
+            ExtensionActionListCoordinator.RecyclerViewDelegate recyclerViewDelegate) {
+        Context context = params.context;
+        WindowAndroid windowAndroid = params.windowAndroid;
+        ChromeAndroidTask task = params.task;
+        Profile profile = params.profile;
+        NullableObservableSupplier<Tab> currentTabSupplier = params.currentTabSupplier;
+        @Nullable ContextMenuPopulatorFactory contextMenuPopulatorFactory =
+                params.contextMenuPopulatorFactory;
+        @Nullable SelectionDropdownMenuDelegate selectionDropdownMenuDelegate =
+                params.selectionDropdownMenuDelegate;
+        TabModelSelector tabModelSelector = params.tabModelSelector;
+        ModalDialogManager modalDialogManager = params.modalDialogManager;
         mContext = context;
         mWindowAndroid = windowAndroid;
         mModels = models;

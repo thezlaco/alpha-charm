@@ -29,6 +29,7 @@ android_library("java") {
     "ExtensionActionListAnchoredModelList.java",
     "ExtensionActionListCoordinator.java",
     "ExtensionActionListMediator.java",
+    "ExtensionActionListParams.java",
     "ExtensionActionListRecyclerView.java",
     "ExtensionActionPopup.java",
     "ExtensionsMenuButtonViewBinder.java",
