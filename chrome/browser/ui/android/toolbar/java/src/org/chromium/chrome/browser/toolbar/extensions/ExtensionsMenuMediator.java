@@ -235,10 +235,7 @@ class ExtensionsMenuMediator implements Destroyable, ExtensionsMenuBridge.Observ
             return;
         }
 
-        // Do nothing when the site permissions page is opened for a different
-        // extension.
-        ExtensionsMenuTypes.MenuEntryState entry = mMenuBridge.getMenuEntry(actionIndex);
-        if (!isSitePermissionsPageOpenedFor(entry)) {
+        if (!isSitePermissionsPageOpenedFor(actionIndex)) {
             return;
         }
 
@@ -258,10 +255,7 @@ class ExtensionsMenuMediator implements Destroyable, ExtensionsMenuBridge.Observ
             return;
         }
 
-        // Do nothing when the site permissions page is opened for a different
-        // extension.
-        ExtensionsMenuTypes.MenuEntryState entry = mMenuBridge.getMenuEntry(actionIndex);
-        if (!isSitePermissionsPageOpenedFor(entry)) {
+        if (!isSitePermissionsPageOpenedFor(actionIndex)) {
             return;
         }
 
@@ -304,10 +298,7 @@ class ExtensionsMenuMediator implements Destroyable, ExtensionsMenuBridge.Observ
             return;
         }
 
-        // Do nothing when the site permissions page is opened for a different
-        // extension.
-        ExtensionsMenuTypes.MenuEntryState entry = mMenuBridge.getMenuEntry(newIndex);
-        if (!isSitePermissionsPageOpenedFor(entry)) {
+        if (!isSitePermissionsPageOpenedFor(newIndex)) {
             return;
         }
 
@@ -413,13 +404,19 @@ class ExtensionsMenuMediator implements Destroyable, ExtensionsMenuBridge.Observ
     }
 
     /**
-     * Returns whether the site permissions page is currently opened for the given extension entry.
+     * Returns whether the site permissions page currently shown belongs to the given extension.
+     *
+     * <p>Callers use this to decide whether a change to one extension concerns the page on screen.
+     * When the page belongs to a different extension, the change is not theirs to act on, so they
+     * leave it alone. Taking the index rather than the entry keeps the lookup with the question
+     * that needs it.
      */
-    private boolean isSitePermissionsPageOpenedFor(ExtensionsMenuTypes.MenuEntryState entry) {
+    private boolean isSitePermissionsPageOpenedFor(int actionIndex) {
         if (getCurrentPage() != ExtensionsMenuProperties.Page.SITE_PERMISSIONS) {
             return false;
         }
 
+        ExtensionsMenuTypes.MenuEntryState entry = mMenuBridge.getMenuEntry(actionIndex);
         String extensionId =
                 mSitePermissionsPageModel.get(SitePermissionsPageProperties.EXTENSION_ID);
         return entry.id.equals(extensionId);
