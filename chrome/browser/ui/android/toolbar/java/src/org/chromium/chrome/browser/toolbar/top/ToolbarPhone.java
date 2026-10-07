@@ -702,6 +702,18 @@ public class ToolbarPhone extends ToolbarLayout
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             return;
         }
+
+        // The extension controls compete for width here the way they do on a tablet, and are
+        // allocated before anything measures so the result is what the rest of this pass sees.
+        //
+        // This toolbar used to take part in no width arbitration at all, which is why the
+        // extensions ran into the buttons beside them instead of yielding. The ranking and the
+        // allocation are shared; only the call into them was missing.
+        int width =
+                Math.max(0, MeasureSpec.getSize(widthMeasureSpec) - getControlContainerMargin());
+        allocateAvailableToolbarWidth(
+                mToolbarWidthConsumers, width, widthMeasureSpec, heightMeasureSpec);
+
         if (!mDisableLocationBarRelayout) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
