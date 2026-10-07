@@ -333,7 +333,8 @@ public class ExtensionsToolbarCoordinatorImpl
         Handler handler = new Handler(Looper.getMainLooper());
 
         if (anchorView.isShown()) {
-            showIphInternalHelper(activity, anchorView, handler);
+            showIphInternalHelper(
+                    activity, anchorView, handler, manageExtensionsIphCommand(anchorView));
         } else {
             if (mLayoutChangeListener != null) {
                 anchorView.removeOnLayoutChangeListener(mLayoutChangeListener);
@@ -354,7 +355,8 @@ public class ExtensionsToolbarCoordinatorImpl
                             if (v.isShown()) {
                                 v.removeOnLayoutChangeListener(this);
                                 mLayoutChangeListener = null;
-                                showIphInternalHelper(activity, v, handler);
+                                showIphInternalHelper(
+                                        activity, v, handler, manageExtensionsIphCommand(v));
                             }
                         }
                     };
@@ -362,26 +364,14 @@ public class ExtensionsToolbarCoordinatorImpl
         }
     }
 
-    private void showIphInternalHelper(Activity activity, View anchorView, Handler handler) {
-        requestIph(
-                activity,
-                anchorView,
-                handler,
-                new IphCommandBuilder(
-                        anchorView.getContext().getResources(),
-                        FeatureConstants.IPH_EXTENSIONS_MANAGE_TOOLBAR_FEATURE,
-                        R.string.extensions_menu_manage_toolbar_iph,
-                        R.string.extensions_menu_manage_toolbar_iph));
-    }
-
     /**
      * Shows an in-product help bubble anchored to {@code anchorView}.
      *
-     * <p>The bubbles this toolbar shows differ only in the command built for them. The anchor, the
-     * orientation and the inset were written out once per bubble, and two copies of one set of
-     * layout settings are free to drift apart.
+     * <p>The bubbles this toolbar shows differ only in the command built for them, so the anchor,
+     * the orientation and the inset are applied here rather than repeated per bubble. The command
+     * is built by the caller, which keeps each call site stating outright which bubble it shows.
      */
-    private void requestIph(
+    private void showIphInternalHelper(
             Activity activity, View anchorView, Handler handler, IphCommandBuilder command) {
         UserEducationHelper userEducationHelper =
                 new UserEducationHelper(activity, mProfile, handler);
@@ -394,6 +384,24 @@ public class ExtensionsToolbarCoordinatorImpl
                         .setRemoveArrow(true)
                         .setInsetRect(new Rect())
                         .build());
+    }
+
+    /** Builds the command for the bubble that points at the extensions menu button. */
+    private static IphCommandBuilder manageExtensionsIphCommand(View anchorView) {
+        return new IphCommandBuilder(
+                anchorView.getContext().getResources(),
+                FeatureConstants.IPH_EXTENSIONS_MANAGE_TOOLBAR_FEATURE,
+                R.string.extensions_menu_manage_toolbar_iph,
+                R.string.extensions_menu_manage_toolbar_iph);
+    }
+
+    /** Builds the command for the bubble that points at a pinned extension's button. */
+    private static IphCommandBuilder pinnedByDefaultIphCommand(View anchorView) {
+        return new IphCommandBuilder(
+                anchorView.getContext().getResources(),
+                FeatureConstants.IPH_EXTENSIONS_PINNED_BY_DEFAULT_FEATURE,
+                R.string.extensions_pinned_by_default_iph_body,
+                R.string.extensions_pinned_by_default_iph_body);
     }
 
     private void showPinnedByDefaultIphInternal(String extensionId) {
@@ -414,7 +422,8 @@ public class ExtensionsToolbarCoordinatorImpl
         Handler handler = new Handler(Looper.getMainLooper());
 
         if (anchorView.isShown()) {
-            showPinnedByDefaultIphInternalHelper(activity, anchorView, handler);
+            showIphInternalHelper(
+                    activity, anchorView, handler, pinnedByDefaultIphCommand(anchorView));
         } else {
             // Wait for it to be laid out and visible.
             final View finalAnchor = anchorView;
@@ -433,26 +442,17 @@ public class ExtensionsToolbarCoordinatorImpl
                                 int oldBottom) {
                             if (v.isShown()) {
                                 v.removeOnLayoutChangeListener(this);
-                                showPinnedByDefaultIphInternalHelper(
-                                        activity, finalAnchor, handler);
+                                showIphInternalHelper(
+                                        activity,
+                                        finalAnchor,
+                                        handler,
+                                        pinnedByDefaultIphCommand(finalAnchor));
                             }
                         }
                     });
         }
     }
 
-    private void showPinnedByDefaultIphInternalHelper(
-            Activity activity, View anchorView, Handler handler) {
-        requestIph(
-                activity,
-                anchorView,
-                handler,
-                new IphCommandBuilder(
-                        anchorView.getContext().getResources(),
-                        FeatureConstants.IPH_EXTENSIONS_PINNED_BY_DEFAULT_FEATURE,
-                        R.string.extensions_pinned_by_default_iph_body,
-                        R.string.extensions_pinned_by_default_iph_body));
-    }
 
     private void saveMenuButtonPinState(boolean pinned) {
         mPrefService.setBoolean(Pref.PIN_EXTENSIONS_MENU_BUTTON, pinned);
