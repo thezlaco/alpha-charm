@@ -93,6 +93,7 @@ public class ExtensionsMenuCoordinator
     private final ChromeAndroidTask mTask;
     private final WindowAndroid mWindowAndroid;
     private final ExtensionsToolbarBridge mExtensionsToolbarBridge;
+    private final ExtensionsMenuParams mParams;
     private final MenuButtonPinningDelegate mMenuButtonPinningDelegate;
     private final ThemeColorProvider.TintObserver mTintObserver = this::onTintChanged;
     private final ModalDialogManagerObserver mModalDialogManagerObserver =
@@ -139,6 +140,7 @@ public class ExtensionsMenuCoordinator
         mTask = params.task;
         mWindowAndroid = windowAndroid;
         mExtensionsToolbarBridge = params.toolbarBridge;
+        mParams = params;
         mMenuButtonPinningDelegate = menuButtonPinningDelegate;
         mModalDialogManager = modalDialogManager;
 
@@ -258,7 +260,7 @@ public class ExtensionsMenuCoordinator
         // Instantiate the mediator, which will initialize the JNI bridge to the native code.
         mMediator =
                 new ExtensionsMenuMediator(
-                        params,
+                        mParams,
                         mExtensionModels,
                         mMainPageModel,
                         mSitePermissionsPageModel,

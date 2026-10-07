@@ -182,6 +182,7 @@ class ExtensionActionListMediator implements Destroyable {
         ChromeAndroidTask task = params.task;
         Profile profile = params.profile;
         NullableObservableSupplier<Tab> currentTabSupplier = params.currentTabSupplier;
+        ExtensionsToolbarBridge extensionsToolbarBridge = params.extensionsToolbarBridge;
         @Nullable ContextMenuPopulatorFactory contextMenuPopulatorFactory =
                 params.contextMenuPopulatorFactory;
         @Nullable SelectionDropdownMenuDelegate selectionDropdownMenuDelegate =

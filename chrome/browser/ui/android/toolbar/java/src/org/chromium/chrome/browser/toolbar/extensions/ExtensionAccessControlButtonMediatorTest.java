@@ -122,11 +122,12 @@ public class ExtensionAccessControlButtonMediatorTest {
         mMediator =
                 new ExtensionAccessControlButtonMediator(
                         mContext,
-                        mModel,
-                        mCurrentTabSupplier,
-                        mExtensionsToolbarBridge,
-                        (v) -> {},
-                        mIsWindowCompactSupplier);
+                        new ExtensionAccessControlButtonParams(
+                                mModel,
+                                mCurrentTabSupplier,
+                                mExtensionsToolbarBridge,
+                                (v) -> {},
+                                mIsWindowCompactSupplier));
         verify(mExtensionsToolbarBridge).addObserver(mToolbarObserverCaptor.capture());
     }
 

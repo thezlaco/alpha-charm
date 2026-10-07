@@ -160,12 +160,13 @@ public class ExtensionsMenuMediatorTest {
         mActionModels = new ModelList();
         mMenuMediator =
                 new ExtensionsMenuMediator(
-                        ApplicationProvider.getApplicationContext(),
-                        mTask,
-                        mProfile,
-                        mCurrentTabSupplier,
-                        mTabCreator,
-                        mExtensionsToolbarBridge,
+                        new ExtensionsMenuParams(
+                                ApplicationProvider.getApplicationContext(),
+                                mTask,
+                                mProfile,
+                                mCurrentTabSupplier,
+                                mTabCreator,
+                                mExtensionsToolbarBridge),
                         mActionModels,
                         mMenuPropertyModel,
                         mSitePermissionsPropertyModel,
@@ -240,12 +241,13 @@ public class ExtensionsMenuMediatorTest {
         // Re-create mediator (simulating a fresh open where C++ is already ready).
         ExtensionsMenuMediator mediator =
                 new ExtensionsMenuMediator(
-                        ApplicationProvider.getApplicationContext(),
-                        mTask,
-                        mProfile,
-                        mCurrentTabSupplier,
-                        mTabCreator,
-                        mExtensionsToolbarBridge,
+                        new ExtensionsMenuParams(
+                                ApplicationProvider.getApplicationContext(),
+                                mTask,
+                                mProfile,
+                                mCurrentTabSupplier,
+                                mTabCreator,
+                                mExtensionsToolbarBridge),
                         mActionModels,
                         mMenuPropertyModel,
                         mSitePermissionsPropertyModel,

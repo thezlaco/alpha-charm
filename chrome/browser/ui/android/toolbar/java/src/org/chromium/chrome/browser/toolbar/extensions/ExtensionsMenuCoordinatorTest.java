@@ -154,15 +154,16 @@ public class ExtensionsMenuCoordinatorTest {
 
         mExtensionsMenuCoordinator =
                 new ExtensionsMenuCoordinator(
-                        mContext,
+                        new ExtensionsMenuParams(
+                                mContext,
+                                mTask,
+                                mProfile,
+                                mCurrentTabSupplier,
+                                mTabCreator,
+                                mExtensionsToolbarBridge),
                         mExtensionsMenuButton,
                         mThemeColorProvider,
-                        mTask,
                         mWindowAndroid,
-                        mProfile,
-                        mCurrentTabSupplier,
-                        mTabCreator,
-                        mExtensionsToolbarBridge,
                         mMenuButtonPinningDelegate,
                         mModalDialogManager);
 

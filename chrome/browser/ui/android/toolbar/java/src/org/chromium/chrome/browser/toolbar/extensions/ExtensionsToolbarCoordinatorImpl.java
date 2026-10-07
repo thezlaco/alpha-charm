@@ -182,14 +182,18 @@ public class ExtensionsToolbarCoordinatorImpl
 
         mExtensionAccessControlButtonCoordinator =
                 new ExtensionAccessControlButtonCoordinator(
-                        mToolbarModel,
-                        currentTabSupplier,
-                        mExtensionsToolbarBridge,
-                        (TextView) mContainer.findViewById(R.id.extensions_request_access_button),
-                        CallbackUtils.emptyCallback(),
-                        () ->
-                                mContainer.getResources().getConfiguration().screenWidthDp
-                                        < COMPACT_WINDOW_THRESHOLD_DP);
+                        new ExtensionAccessControlButtonParams(
+                                mToolbarModel,
+                                currentTabSupplier,
+                                mExtensionsToolbarBridge,
+                                CallbackUtils.emptyCallback(),
+                                () ->
+                                        mContainer
+                                                .getResources()
+                                                .getConfiguration()
+                                                .screenWidthDp
+                                                < COMPACT_WINDOW_THRESHOLD_DP),
+                        (TextView) mContainer.findViewById(R.id.extensions_request_access_button));
         mPrefChangeRegistrar = PrefServiceUtil.createFor(profile);
         mPrefChangeRegistrar.addObserver(
                 Pref.PIN_EXTENSIONS_MENU_BUTTON, this::updateMenuButtonPinState);
