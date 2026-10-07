@@ -30,7 +30,7 @@ import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.tabmodel.TabCreator;
 import org.chromium.chrome.browser.theme.ThemeColorProvider;
 import org.chromium.chrome.browser.toolbar.MenuBuilderHelper;
-import org.chromium.chrome.browser.toolbar.extensions.ExtensionsToolbarCoordinatorImpl.MenuButtonPinningDelegate;
+import org.chromium.chrome.browser.toolbar.extensions.ExtensionsToolbarCoordinator.MenuButtonPinningDelegate;
 import org.chromium.chrome.browser.ui.browser_window.ChromeAndroidTask;
 import org.chromium.chrome.browser.ui.extensions.ExtensionsMenuButtonState;
 import org.chromium.chrome.browser.ui.extensions.ExtensionsMenuTypes;
@@ -113,16 +113,11 @@ public class ExtensionsMenuCoordinator
     /**
      * Constructor.
      *
-     * @param context The context for this component.
+     * @param params The dependencies the menu shares with its mediator.
      * @param extensionsMenuButton The puzzle icon in the toolbar.
      * @param themeColorProvider The provider for theme colors.
-     * @param task Supplies the {@link ChromeAndroidTask}.
      * @param windowAndroid The {@link WindowAndroid} for the current activity.
-     * @param profile The current profile.
-     * @param currentTabSupplier Supplies the current {@link Tab}.
-     * @param tabCreator {@link TabCreator} to handle a new tab creation.
-     * @param extensionsToolbarBridge {@link ExtensionsToolbarBridge} to use.
-     * @param MenuButtonPinningDelegate The {@link MenuButtonPinningDelegate} to handle pinning the
+     * @param menuButtonPinningDelegate The {@link MenuButtonPinningDelegate} to handle pinning the
      *     icon.
      * @param modalDialogManager The {@link ModalDialogManager}.
      */

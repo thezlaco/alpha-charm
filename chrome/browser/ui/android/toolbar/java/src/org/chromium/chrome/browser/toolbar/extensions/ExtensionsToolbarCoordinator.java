@@ -90,4 +90,29 @@ public interface ExtensionsToolbarCoordinator extends ChromeAndroidTaskFeature, 
      * here; it is the toolbar's ranking.
      */
     Map<Integer, ToolbarWidthConsumer> getWidthConsumers();
+
+    /**
+     * How the extensions menu pins and unpins its toolbar button.
+     *
+     * <p>The menu needs the toolbar to act on a pin, but it does not need to know how the toolbar
+     * stores one. Declaring that here rather than inside the implementation means the menu depends
+     * on this interface, which is the seam between a toolbar and an extension UI that may not be
+     * compiled at all, instead of naming a class that exists only when it is.
+     */
+    interface MenuButtonPinningDelegate {
+        /** Records the pinned state and re-reads the button. */
+        void setMenuButtonPinned(boolean pinned);
+
+        /** Returns whether the menu button is currently pinned. */
+        boolean isMenuButtonPinned();
+
+        /**
+         * Asks for a layout pass, and with it width allocation.
+         *
+         * <p>Separate from {@link #setMenuButtonPinned(boolean)} because the toolbar lays the
+         * button out when the popup closes, which is a different moment from the user choosing to
+         * pin.
+         */
+        void requestLayoutWithViewUtils();
+    }
 }

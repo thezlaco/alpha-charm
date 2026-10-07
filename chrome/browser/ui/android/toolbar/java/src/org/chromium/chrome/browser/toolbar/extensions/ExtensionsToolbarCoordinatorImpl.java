@@ -505,16 +505,26 @@ public class ExtensionsToolbarCoordinatorImpl
                 || (mCanShowMenuIcon && isMenuButtonPinned());
     }
 
-    public class MenuButtonPinningDelegate {
-        void setMenuButtonPinned(boolean pinned) {
+    /**
+     * The pinning behaviour the extensions menu drives.
+     *
+     * <p>Each method forwards to the toolbar, which is why this holds nothing of its own: the menu
+     * reads and writes pinning state, and the toolbar owns it.
+     */
+    public final class MenuButtonPinningDelegate
+            implements ExtensionsToolbarCoordinator.MenuButtonPinningDelegate {
+        @Override
+        public void setMenuButtonPinned(boolean pinned) {
             ExtensionsToolbarCoordinatorImpl.this.saveMenuButtonPinState(pinned);
         }
 
-        boolean isMenuButtonPinned() {
+        @Override
+        public boolean isMenuButtonPinned() {
             return ExtensionsToolbarCoordinatorImpl.this.isMenuButtonPinned();
         }
 
-        void requestLayoutWithViewUtils() {
+        @Override
+        public void requestLayoutWithViewUtils() {
             // Trigger layout and wait for the toolbar to provide us with width allocation.
             ViewUtils.requestLayout(
                     mContainer, "ExtensionsToolbarCoordinatorImpl.requestLayoutWithViewUtils()");
