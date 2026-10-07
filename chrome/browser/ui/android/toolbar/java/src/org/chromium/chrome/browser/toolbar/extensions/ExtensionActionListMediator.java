@@ -65,8 +65,7 @@ class ExtensionActionListMediator implements Destroyable {
         public static final class Idle extends ActionState {}
 
         /** State when popup is waiting for UI animations to finish. */
-        public static final class PopupPending extends ActionState {
-            private final String mActionId;
+        public static final class PopupPending extends ActionStateForAction {
             private final ExtensionActionPopupContents mContents;
             private final boolean mInspectWithDevTools;
 
@@ -74,13 +73,9 @@ class ExtensionActionListMediator implements Destroyable {
                     String actionId,
                     ExtensionActionPopupContents contents,
                     boolean inspectWithDevTools) {
-                mActionId = actionId;
+                super(actionId);
                 mContents = contents;
                 mInspectWithDevTools = inspectWithDevTools;
-            }
-
-            public String getActionId() {
-                return mActionId;
             }
 
             public ExtensionActionPopupContents getContents() {
@@ -93,29 +88,36 @@ class ExtensionActionListMediator implements Destroyable {
         }
 
         /** State when a popup is active. */
-        public static final class PopupActive extends ActionState {
+        public static final class PopupActive extends ActionStateForAction {
             private final ExtensionActionPopup mPopup;
-            private final String mActionId;
 
             public PopupActive(ExtensionActionPopup popup, String actionId) {
+                super(actionId);
                 mPopup = popup;
-                mActionId = actionId;
             }
 
             public ExtensionActionPopup getPopup() {
                 return mPopup;
             }
-
-            public String getActionId() {
-                return mActionId;
-            }
         }
 
         /** State when a context menu is active. */
-        public static final class ContextMenuActive extends ActionState {
+        public static final class ContextMenuActive extends ActionStateForAction {
+            public ContextMenuActive(String actionId) {
+                super(actionId);
+            }
+        }
+
+        /**
+         * A state that concerns one particular extension action.
+         *
+         * <p>Everything except {@link Idle} carries the action it belongs to, and that was a field
+         * and an accessor repeated in each of them rather than stated once where they meet.
+         */
+        private abstract static sealed class ActionStateForAction extends ActionState {
             private final String mActionId;
 
-            public ContextMenuActive(String actionId) {
+            ActionStateForAction(String actionId) {
                 mActionId = actionId;
             }
 
