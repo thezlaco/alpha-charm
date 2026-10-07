@@ -110,30 +110,32 @@ public class ExtensionsToolbarCoordinatorImpl
     private @Nullable Runnable mOnFeatureRemoved;
 
     @Override
-    public void initializeWithNative(
-            Context context,
-            ViewStub extensionsToolbarStub,
-            WindowAndroid windowAndroid,
-            ChromeAndroidTask task,
-            Profile profile,
-            NullableObservableSupplier<Tab> currentTabSupplier,
-            TabCreator tabCreator,
-            ThemeColorProvider themeColorProvider,
-            ViewGroup rootView,
-            @Nullable ContextMenuPopulatorFactory contextMenuPopulatorFactory,
-            @Nullable SelectionDropdownMenuDelegate selectionDropdownMenuDelegate,
-            TabModelSelector tabModelSelector,
-            ModalDialogManager modalDialogManager,
-            @Nullable Runnable onFeatureRemoved) {
-        mBridge = new ExtensionActionsBridge(task, profile);
+    public void initializeWithNative(ExtensionsToolbarInitParams params) {
+        Context context = params.context;
+        ChromeAndroidTask task = params.task;
+        Profile profile = params.profile;
+        WindowAndroid windowAndroid = params.windowAndroid;
+        TabModelSelector tabModelSelector = params.tabModelSelector;
+        ViewGroup rootView = params.rootView;
+        NullableObservableSupplier<Tab> currentTabSupplier = params.currentTabSupplier;
+        TabCreator tabCreator = params.tabCreator;
+        ThemeColorProvider themeColorProvider = params.themeColorProvider;
+        ModalDialogManager modalDialogManager = params.modalDialogManager;
+
+        final ContextMenuPopulatorFactory contextMenuPopulatorFactory =
+                params.contextMenuPopulatorFactory;
+        final SelectionDropdownMenuDelegate selectionDropdownMenuDelegate =
+                params.selectionDropdownMenuDelegate;
+
         mWindowAndroid = windowAndroid;
         mProfile = profile;
-        mCurrentTabSupplier = currentTabSupplier;
-        mOnFeatureRemoved = onFeatureRemoved;
+        mCurrentTabSupplier = params.currentTabSupplier;
+        mOnFeatureRemoved = params.onFeatureRemoved;
 
-        extensionsToolbarStub.setLayoutResource(R.layout.extensions_toolbar_container);
-        mContainer = (LinearLayout) extensionsToolbarStub.inflate();
+        mBridge = new ExtensionActionsBridge(task, profile);
 
+        params.extensionsToolbarStub.setLayoutResource(R.layout.extensions_toolbar_container);
+        mContainer = (LinearLayout) params.extensionsToolbarStub.inflate();
         mExtensionsToolbarBridge = new ExtensionsToolbarBridge(task, profile);
         mExtensionsToolbarBridge.addObserver(mExtensionsToolbarBridgeObserver);
 
@@ -333,8 +335,7 @@ public class ExtensionsToolbarCoordinatorImpl
         Handler handler = new Handler(Looper.getMainLooper());
 
         if (anchorView.isShown()) {
-            showIphInternalHelper(
-                    activity, anchorView, handler, manageExtensionsIphCommand(anchorView));
+            showIphInternalHelper(activity, anchorView, handler);
         } else {
             if (mLayoutChangeListener != null) {
                 anchorView.removeOnLayoutChangeListener(mLayoutChangeListener);
@@ -355,8 +356,7 @@ public class ExtensionsToolbarCoordinatorImpl
                             if (v.isShown()) {
                                 v.removeOnLayoutChangeListener(this);
                                 mLayoutChangeListener = null;
-                                showIphInternalHelper(
-                                        activity, v, handler, manageExtensionsIphCommand(v));
+                                showIphInternalHelper(activity, v, handler);
                             }
                         }
                     };
@@ -364,44 +364,23 @@ public class ExtensionsToolbarCoordinatorImpl
         }
     }
 
-    /**
-     * Shows an in-product help bubble anchored to {@code anchorView}.
-     *
-     * <p>The bubbles this toolbar shows differ only in the command built for them, so the anchor,
-     * the orientation and the inset are applied here rather than repeated per bubble. The command
-     * is built by the caller, which keeps each call site stating outright which bubble it shows.
-     */
-    private void showIphInternalHelper(
-            Activity activity, View anchorView, Handler handler, IphCommandBuilder command) {
+    private void showIphInternalHelper(Activity activity, View anchorView, Handler handler) {
         UserEducationHelper userEducationHelper =
                 new UserEducationHelper(activity, mProfile, handler);
 
         userEducationHelper.requestShowIph(
-                command.setAnchorView(anchorView)
+                new IphCommandBuilder(
+                                anchorView.getContext().getResources(),
+                                FeatureConstants.IPH_EXTENSIONS_MANAGE_TOOLBAR_FEATURE,
+                                R.string.extensions_menu_manage_toolbar_iph,
+                                R.string.extensions_menu_manage_toolbar_iph)
+                        .setAnchorView(anchorView)
                         .setPreferredHorizontalOrientation(
                                 HorizontalOrientation.MAX_AVAILABLE_SPACE)
                         .setHorizontalOverlapAnchor(true)
                         .setRemoveArrow(true)
                         .setInsetRect(new Rect())
                         .build());
-    }
-
-    /** Builds the command for the bubble that points at the extensions menu button. */
-    private static IphCommandBuilder manageExtensionsIphCommand(View anchorView) {
-        return new IphCommandBuilder(
-                anchorView.getContext().getResources(),
-                FeatureConstants.IPH_EXTENSIONS_MANAGE_TOOLBAR_FEATURE,
-                R.string.extensions_menu_manage_toolbar_iph,
-                R.string.extensions_menu_manage_toolbar_iph);
-    }
-
-    /** Builds the command for the bubble that points at a pinned extension's button. */
-    private static IphCommandBuilder pinnedByDefaultIphCommand(View anchorView) {
-        return new IphCommandBuilder(
-                anchorView.getContext().getResources(),
-                FeatureConstants.IPH_EXTENSIONS_PINNED_BY_DEFAULT_FEATURE,
-                R.string.extensions_pinned_by_default_iph_body,
-                R.string.extensions_pinned_by_default_iph_body);
     }
 
     private void showPinnedByDefaultIphInternal(String extensionId) {
@@ -422,8 +401,7 @@ public class ExtensionsToolbarCoordinatorImpl
         Handler handler = new Handler(Looper.getMainLooper());
 
         if (anchorView.isShown()) {
-            showIphInternalHelper(
-                    activity, anchorView, handler, pinnedByDefaultIphCommand(anchorView));
+            showPinnedByDefaultIphInternalHelper(activity, anchorView, handler);
         } else {
             // Wait for it to be laid out and visible.
             final View finalAnchor = anchorView;
@@ -442,17 +420,33 @@ public class ExtensionsToolbarCoordinatorImpl
                                 int oldBottom) {
                             if (v.isShown()) {
                                 v.removeOnLayoutChangeListener(this);
-                                showIphInternalHelper(
-                                        activity,
-                                        finalAnchor,
-                                        handler,
-                                        pinnedByDefaultIphCommand(finalAnchor));
+                                showPinnedByDefaultIphInternalHelper(
+                                        activity, finalAnchor, handler);
                             }
                         }
                     });
         }
     }
 
+    private void showPinnedByDefaultIphInternalHelper(
+            Activity activity, View anchorView, Handler handler) {
+        UserEducationHelper userEducationHelper =
+                new UserEducationHelper(activity, mProfile, handler);
+
+        userEducationHelper.requestShowIph(
+                new IphCommandBuilder(
+                                anchorView.getContext().getResources(),
+                                FeatureConstants.IPH_EXTENSIONS_PINNED_BY_DEFAULT_FEATURE,
+                                R.string.extensions_pinned_by_default_iph_body,
+                                R.string.extensions_pinned_by_default_iph_body)
+                        .setAnchorView(anchorView)
+                        .setPreferredHorizontalOrientation(
+                                HorizontalOrientation.MAX_AVAILABLE_SPACE)
+                        .setHorizontalOverlapAnchor(true)
+                        .setRemoveArrow(true)
+                        .setInsetRect(new Rect())
+                        .build());
+    }
 
     private void saveMenuButtonPinState(boolean pinned) {
         mPrefService.setBoolean(Pref.PIN_EXTENSIONS_MENU_BUTTON, pinned);
@@ -526,27 +520,24 @@ public class ExtensionsToolbarCoordinatorImpl
         return mActionListWidthConsumer;
     }
 
-    private class PoppedOutActionWidthConsumer implements ToolbarWidthConsumer {
+    /**
+     * What the four toolbar width consumers have in common.
+     *
+     * <p>Each one answers whether its own control fits, so none of them ever wants the animated
+     * form to behave differently from the plain one: the toolbar measures and lays out in one pass
+     * and animates nothing here. That delegation was written out four times, along with the flag
+     * three of them keep and report through {@link #hasSpaceToShow()}.
+     */
+    private abstract class BaseWidthConsumer implements ToolbarWidthConsumer {
         private boolean mHasSpaceToShow;
-
-        @Override
-        public boolean isVisible() {
-            return mExtensionActionListCoordinator.hasPoppedOutAction();
-        }
 
         @Override
         public boolean hasSpaceToShow() {
             return mHasSpaceToShow;
         }
 
-        @Override
-        public int updateVisibility(int availableWidth) {
-            // Do not update the UI here just yet. We will leave that to {@link
-            // ActionListWidthConsumer}, which will be called but later because it has lower
-            // priority.
-            int width = mExtensionActionListCoordinator.setCanShowPoppedOutAction(availableWidth);
-            mHasSpaceToShow = mExtensionActionListCoordinator.canShowPoppedOutAction();
-            return width;
+        protected final void setHasSpaceToShow(boolean hasSpaceToShow) {
+            mHasSpaceToShow = hasSpaceToShow;
         }
 
         @Override
@@ -556,21 +547,31 @@ public class ExtensionsToolbarCoordinatorImpl
         }
     }
 
-    private class RequestAccessButtonWidthConsumer implements ToolbarWidthConsumer {
-        private boolean mHasSpaceToShow;
+    private class PoppedOutActionWidthConsumer extends BaseWidthConsumer {
+        @Override
+        public boolean isVisible() {
+            return mExtensionActionListCoordinator.hasPoppedOutAction();
+        }
 
+        @Override
+        public int updateVisibility(int availableWidth) {
+            // Do not update the UI here just yet. We will leave that to {@link
+            // ActionListWidthConsumer}, which will be called but later because it has lower
+            // priority.
+            int width = mExtensionActionListCoordinator.setCanShowPoppedOutAction(availableWidth);
+            setHasSpaceToShow(mExtensionActionListCoordinator.canShowPoppedOutAction());
+            return width;
+        }
+    }
+
+    private class RequestAccessButtonWidthConsumer extends BaseWidthConsumer {
         @Override
         public boolean isVisible() {
             return mToolbarModel.get(ExtensionsToolbarProperties.IS_REQUEST_ACCESS_BUTTON_VISIBLE);
         }
 
-        @Override
-        public boolean hasSpaceToShow() {
-            return mHasSpaceToShow;
-        }
-
         private void setHasSpaceToShow(boolean hasSpaceToShow) {
-            mHasSpaceToShow = hasSpaceToShow;
+            setHasSpaceToShow(hasSpaceToShow);
             int visibility = hasSpaceToShow ? View.VISIBLE : View.GONE;
             mContainer
                     .findViewById(R.id.extensions_request_access_button)
@@ -613,15 +614,9 @@ public class ExtensionsToolbarCoordinatorImpl
 
             return Math.min(availableWidth, buttonWidth);
         }
-
-        @Override
-        public int updateVisibilityWithAnimation(
-                int availableWidth, Collection<Animator> animators) {
-            return updateVisibility(availableWidth);
-        }
     }
 
-    private class MenuButtonWidthConsumer implements ToolbarWidthConsumer {
+    private class MenuButtonWidthConsumer extends BaseWidthConsumer {
         @Override
         public boolean isVisible() {
             // This return value is used to determine whether to show the icon row in the app menu.
@@ -645,17 +640,9 @@ public class ExtensionsToolbarCoordinatorImpl
 
             return shouldShowMenuIcon() ? puzzleButtonWidth : 0;
         }
-
-        @Override
-        public int updateVisibilityWithAnimation(
-                int availableWidth, Collection<Animator> animators) {
-            return updateVisibility(availableWidth);
-        }
     }
 
-    private class ActionListWidthConsumer implements ToolbarWidthConsumer {
-        private boolean mHasSpaceToShow;
-
+    private class ActionListWidthConsumer extends BaseWidthConsumer {
         @Override
         public boolean isVisible() {
             return mContainer.findViewById(R.id.extension_action_list).getVisibility()
@@ -663,21 +650,10 @@ public class ExtensionsToolbarCoordinatorImpl
         }
 
         @Override
-        public boolean hasSpaceToShow() {
-            return mHasSpaceToShow;
-        }
-
-        @Override
         public int updateVisibility(int availableWidth) {
             int width = mExtensionActionListCoordinator.fitActionsWithinWidth(availableWidth);
-            mHasSpaceToShow = width > 0;
+            setHasSpaceToShow(width > 0);
             return width;
-        }
-
-        @Override
-        public int updateVisibilityWithAnimation(
-                int availableWidth, Collection<Animator> animators) {
-            return updateVisibility(availableWidth);
         }
     }
 }
