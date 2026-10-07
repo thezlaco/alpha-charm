@@ -22,13 +22,19 @@ change so far.
 
 ## What we have changed
 
-| Commit | Effect |
+| Change | Effect |
 | --- | --- |
 | `Show the extensions toolbar on phone layouts` | Makes the extensions popup, pinning and per-site permissions reachable at phone widths |
+| `Finish the parameter-object refactor` | Completes the move of shared dependencies into parameter objects, which had left the tree not compiling |
+| `Put the menu button factory where its inputs are in scope` | Builds both menu buttons through one place, reachable from the constructor whose scope it depends on |
+| `Compile this repository instead of a tree that is never created` | Makes `tools/build.sh` and the workflow build the checkout they live in |
+| `Free disk before the checkout rather than after` | Reclaims runner disk before the largest step rather than after it |
+| `Compile the native side in parts` | Turns on `is_component_build`, the one remaining lever on how much disk a build needs |
+| `Point the notes at places that exist` | Removes references to files this repository never had |
 
-One change so far, and it is not the interesting part of the project. It is
-recorded here because it is what currently differs from upstream, not because it
-defines what Charm is.
+None of this is the interesting part of the project. It is recorded here because
+it is what currently differs from upstream, not because it defines what Charm
+is.
 
 ## How the extensions change works
 
