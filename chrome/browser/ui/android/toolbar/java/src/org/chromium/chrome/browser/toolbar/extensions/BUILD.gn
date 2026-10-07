@@ -37,6 +37,7 @@ android_library("java") {
     "ExtensionsMenuItemProperties.java",
     "ExtensionsMenuItemViewBinder.java",
     "ExtensionsMenuMediator.java",
+    "ExtensionsMenuParams.java",
     "ExtensionsMenuProperties.java",
     "ExtensionsMenuViewBinder.java",
     "ExtensionsToolbarCoordinatorImpl.java",

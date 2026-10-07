@@ -54,11 +54,7 @@ class ExtensionsMenuMediator implements Destroyable, ExtensionsMenuBridge.Observ
     private final TabCreator mTabCreator;
 
     /**
-     * @param context The context to use.
-     * @param task The task object.
-     * @param profile The current profile.
-     * @param currentTabSupplier The supplier for the current tab.
-     * @param tabCreator The tab creator to use.
+     * @param params The dependencies shared with the coordinator.
      * @param actionModels The model list to populate with extension actions.
      * @param mainPageModel The property model for the menu.
      * @param sitePermissionsPropertyModel The property model for the site permissions page.
@@ -66,27 +62,23 @@ class ExtensionsMenuMediator implements Destroyable, ExtensionsMenuBridge.Observ
      * @param onReady A runnable to run when the menu is ready to be shown.
      */
     public ExtensionsMenuMediator(
-            Context context,
-            ChromeAndroidTask task,
-            Profile profile,
-            NullableObservableSupplier<Tab> currentTabSupplier,
-            TabCreator tabCreator,
-            ExtensionsToolbarBridge toolbarBridge,
+            ExtensionsMenuParams params,
             ModelList actionModels,
             PropertyModel mainPageModel,
             PropertyModel sitePermissionsPropertyModel,
             Runnable onDismissMenu,
             Runnable onReady) {
         mActionModels = actionModels;
-        mContext = context;
-        mCurrentTabSupplier = currentTabSupplier;
+        mContext = params.context;
+        mCurrentTabSupplier = params.currentTabSupplier;
         mOnDismissMenu = onDismissMenu;
         mOnReady = onReady;
-        mTabCreator = tabCreator;
-        mTask = task;
-        mProfile = profile;
+        mTabCreator = params.tabCreator;
+        mTask = params.task;
+        mProfile = params.profile;
         mMenuBridge =
-                new ExtensionsMenuBridge(mTask, mProfile, toolbarBridge, /* observer= */ this);
+                new ExtensionsMenuBridge(
+                        mTask, mProfile, params.toolbarBridge, /* observer= */ this);
 
         mMainPageModel = mainPageModel;
         mSitePermissionsPageModel = sitePermissionsPropertyModel;

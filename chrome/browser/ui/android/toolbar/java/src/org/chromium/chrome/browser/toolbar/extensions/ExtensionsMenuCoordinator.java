@@ -126,24 +126,19 @@ public class ExtensionsMenuCoordinator
      * @param modalDialogManager The {@link ModalDialogManager}.
      */
     public ExtensionsMenuCoordinator(
-            Context context,
+            ExtensionsMenuParams params,
             ListMenuButton extensionsMenuButton,
             ThemeColorProvider themeColorProvider,
-            ChromeAndroidTask task,
             WindowAndroid windowAndroid,
-            Profile profile,
-            NullableObservableSupplier<Tab> currentTabSupplier,
-            TabCreator tabCreator,
-            ExtensionsToolbarBridge extensionsToolbarBridge,
             MenuButtonPinningDelegate menuButtonPinningDelegate,
             ModalDialogManager modalDialogManager) {
-        mContext = context;
-        mCurrentTabSupplier = currentTabSupplier;
-        mProfile = profile;
-        mTabCreator = tabCreator;
-        mTask = task;
+        mContext = params.context;
+        mCurrentTabSupplier = params.currentTabSupplier;
+        mProfile = params.profile;
+        mTabCreator = params.tabCreator;
+        mTask = params.task;
         mWindowAndroid = windowAndroid;
-        mExtensionsToolbarBridge = extensionsToolbarBridge;
+        mExtensionsToolbarBridge = params.toolbarBridge;
         mMenuButtonPinningDelegate = menuButtonPinningDelegate;
         mModalDialogManager = modalDialogManager;
 
@@ -263,12 +258,7 @@ public class ExtensionsMenuCoordinator
         // Instantiate the mediator, which will initialize the JNI bridge to the native code.
         mMediator =
                 new ExtensionsMenuMediator(
-                        mContext,
-                        mTask,
-                        mProfile,
-                        mCurrentTabSupplier,
-                        mTabCreator,
-                        mExtensionsToolbarBridge,
+                        params,
                         mExtensionModels,
                         mMainPageModel,
                         mSitePermissionsPageModel,

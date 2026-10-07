@@ -167,15 +167,16 @@ public class ExtensionsToolbarCoordinatorImpl
 
         mExtensionsMenuCoordinator =
                 new ExtensionsMenuCoordinator(
-                        context,
+                        new ExtensionsMenuParams(
+                                context,
+                                task,
+                                profile,
+                                currentTabSupplier,
+                                tabCreator,
+                                mExtensionsToolbarBridge),
                         mContainer.findViewById(R.id.extensions_menu_button),
                         themeColorProvider,
-                        task,
                         windowAndroid,
-                        profile,
-                        currentTabSupplier,
-                        tabCreator,
-                        mExtensionsToolbarBridge,
                         mMenuButtonPinningDelegate,
                         modalDialogManager);
 
