@@ -54,6 +54,7 @@ import org.chromium.ui.modelutil.PropertyModelChangeProcessor;
 import org.chromium.ui.widget.AnchoredPopupWindow.HorizontalOrientation;
 
 import java.util.Collection;
+import java.util.function.Consumer;
 
 /** The implementation of {@link extensionsToolbarCoordinator}. */
 @NullMarked
@@ -99,6 +100,7 @@ public class ExtensionsToolbarCoordinatorImpl
     private final MenuButtonPinningDelegate mMenuButtonPinningDelegate =
             new MenuButtonPinningDelegate();
     private View.@Nullable OnLayoutChangeListener mLayoutChangeListener;
+    private View.@Nullable mLayoutChangeAnchor;
     private boolean mWasWindowCompact;
     private WindowAndroid mWindowAndroid;
     private Profile mProfile;
@@ -229,13 +231,11 @@ public class ExtensionsToolbarCoordinatorImpl
         }
         mIsDestroyed = true;
 
-        if (mLayoutChangeListener != null && mContainer != null) {
-            View anchorView = mContainer.findViewById(R.id.extensions_menu_button);
-            if (anchorView != null) {
-                anchorView.removeOnLayoutChangeListener(mLayoutChangeListener);
-            }
-            mLayoutChangeListener = null;
+        if (mLayoutChangeListener != null && mLayoutChangeAnchor != null) {
+            mLayoutChangeAnchor.removeOnLayoutChangeListener(mLayoutChangeListener);
         }
+        mLayoutChangeListener = null;
+        mLayoutChangeAnchor = null;
 
         mMenuButtonChangeProcessor.destroy();
 
@@ -334,53 +334,92 @@ public class ExtensionsToolbarCoordinatorImpl
 
         Handler handler = new Handler(Looper.getMainLooper());
 
-        if (anchorView.isShown()) {
-            showIphInternalHelper(activity, anchorView, handler);
-        } else {
-            if (mLayoutChangeListener != null) {
-                anchorView.removeOnLayoutChangeListener(mLayoutChangeListener);
-            }
-            mLayoutChangeListener =
-                    new View.OnLayoutChangeListener() {
-                        @Override
-                        public void onLayoutChange(
-                                View v,
-                                int left,
-                                int top,
-                                int right,
-                                int bottom,
-                                int oldLeft,
-                                int oldTop,
-                                int oldRight,
-                                int oldBottom) {
-                            if (v.isShown()) {
-                                v.removeOnLayoutChangeListener(this);
-                                mLayoutChangeListener = null;
-                                showIphInternalHelper(activity, v, handler);
-                            }
-                        }
-                    };
-            anchorView.addOnLayoutChangeListener(mLayoutChangeListener);
-        }
+        runWhenShown(
+                anchorView,
+                view ->
+                        showIphInternalHelper(
+                                activity, view, handler, manageExtensionsIphCommand(view)));
     }
 
-    private void showIphInternalHelper(Activity activity, View anchorView, Handler handler) {
+    /**
+     * Runs {@code action} as soon as {@code anchorView} is on screen.
+     *
+     * <p>A view that has not been laid out yet reports itself as not shown even though it is about
+     * to appear, so the run waits for the next layout pass in that case. Both help bubbles in this
+     * toolbar need this, and each carried its own copy of the deferral, with its own answer to what
+     * should happen to a pending one on teardown: the menu bubble remembered its listener and
+     * removed it, the pinned bubble forgot, so only one of the two could be cancelled.
+     *
+     * <p>At most one run is pending at a time: asking again replaces the previous one instead of
+     * adding a second listener. The anchor is kept alongside the listener so that teardown detaches
+     * from whichever view it was attached to, rather than looking one up by id and hoping it is the
+     * right one.
+     */
+    private void runWhenShown(View anchorView, Consumer<View> action) {
+        if (anchorView.isShown()) {
+            action.accept(anchorView);
+            return;
+        }
+
+        if (mLayoutChangeListener != null && mLayoutChangeAnchor != null) {
+            mLayoutChangeAnchor.removeOnLayoutChangeListener(mLayoutChangeListener);
+        }
+        mLayoutChangeAnchor = anchorView;
+        mLayoutChangeListener =
+                new View.OnLayoutChangeListener() {
+                    @Override
+                    public void onLayoutChange(
+                            View v,
+                            int left,
+                            int top,
+                            int right,
+                            int bottom,
+                            int oldLeft,
+                            int oldTop,
+                            int oldRight,
+                            int oldBottom) {
+                        if (v.isShown()) {
+                            v.removeOnLayoutChangeListener(this);
+                            mLayoutChangeListener = null;
+                            mLayoutChangeAnchor = null;
+                            action.accept(v);
+                        }
+                    }
+                };
+        anchorView.addOnLayoutChangeListener(mLayoutChangeListener);
+    }
+
+    private void showIphInternalHelper(
+            Activity activity, View anchorView, Handler handler, IphCommandBuilder command) {
         UserEducationHelper userEducationHelper =
                 new UserEducationHelper(activity, mProfile, handler);
 
         userEducationHelper.requestShowIph(
-                new IphCommandBuilder(
-                                anchorView.getContext().getResources(),
-                                FeatureConstants.IPH_EXTENSIONS_MANAGE_TOOLBAR_FEATURE,
-                                R.string.extensions_menu_manage_toolbar_iph,
-                                R.string.extensions_menu_manage_toolbar_iph)
-                        .setAnchorView(anchorView)
+                command.setAnchorView(anchorView)
                         .setPreferredHorizontalOrientation(
                                 HorizontalOrientation.MAX_AVAILABLE_SPACE)
                         .setHorizontalOverlapAnchor(true)
                         .setRemoveArrow(true)
                         .setInsetRect(new Rect())
                         .build());
+    }
+
+    /** Builds the command for the bubble that points at the extensions menu button. */
+    private static IphCommandBuilder manageExtensionsIphCommand(View anchorView) {
+        return new IphCommandBuilder(
+                anchorView.getContext().getResources(),
+                FeatureConstants.IPH_EXTENSIONS_MANAGE_TOOLBAR_FEATURE,
+                R.string.extensions_menu_manage_toolbar_iph,
+                R.string.extensions_menu_manage_toolbar_iph);
+    }
+
+    /** Builds the command for the bubble that points at a pinned extension's button. */
+    private static IphCommandBuilder pinnedByDefaultIphCommand(View anchorView) {
+        return new IphCommandBuilder(
+                anchorView.getContext().getResources(),
+                FeatureConstants.IPH_EXTENSIONS_PINNED_BY_DEFAULT_FEATURE,
+                R.string.extensions_pinned_by_default_iph_body,
+                R.string.extensions_pinned_by_default_iph_body);
     }
 
     private void showPinnedByDefaultIphInternal(String extensionId) {
@@ -400,53 +439,13 @@ public class ExtensionsToolbarCoordinatorImpl
 
         Handler handler = new Handler(Looper.getMainLooper());
 
-        if (anchorView.isShown()) {
-            showPinnedByDefaultIphInternalHelper(activity, anchorView, handler);
-        } else {
-            // Wait for it to be laid out and visible.
-            final View finalAnchor = anchorView;
-            anchorView.addOnLayoutChangeListener(
-                    new View.OnLayoutChangeListener() {
-                        @Override
-                        public void onLayoutChange(
-                                View v,
-                                int left,
-                                int top,
-                                int right,
-                                int bottom,
-                                int oldLeft,
-                                int oldTop,
-                                int oldRight,
-                                int oldBottom) {
-                            if (v.isShown()) {
-                                v.removeOnLayoutChangeListener(this);
-                                showPinnedByDefaultIphInternalHelper(
-                                        activity, finalAnchor, handler);
-                            }
-                        }
-                    });
-        }
+        runWhenShown(
+                anchorView,
+                view ->
+                        showIphInternalHelper(
+                                activity, view, handler, pinnedByDefaultIphCommand(view)));
     }
 
-    private void showPinnedByDefaultIphInternalHelper(
-            Activity activity, View anchorView, Handler handler) {
-        UserEducationHelper userEducationHelper =
-                new UserEducationHelper(activity, mProfile, handler);
-
-        userEducationHelper.requestShowIph(
-                new IphCommandBuilder(
-                                anchorView.getContext().getResources(),
-                                FeatureConstants.IPH_EXTENSIONS_PINNED_BY_DEFAULT_FEATURE,
-                                R.string.extensions_pinned_by_default_iph_body,
-                                R.string.extensions_pinned_by_default_iph_body)
-                        .setAnchorView(anchorView)
-                        .setPreferredHorizontalOrientation(
-                                HorizontalOrientation.MAX_AVAILABLE_SPACE)
-                        .setHorizontalOverlapAnchor(true)
-                        .setRemoveArrow(true)
-                        .setInsetRect(new Rect())
-                        .build());
-    }
 
     private void saveMenuButtonPinState(boolean pinned) {
         mPrefService.setBoolean(Pref.PIN_EXTENSIONS_MENU_BUTTON, pinned);
