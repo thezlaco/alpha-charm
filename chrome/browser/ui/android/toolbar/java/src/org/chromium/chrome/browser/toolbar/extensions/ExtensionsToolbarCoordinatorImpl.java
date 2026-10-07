@@ -26,6 +26,7 @@ import org.chromium.build.annotations.NullMarked;
 import org.chromium.build.annotations.Nullable;
 import org.chromium.build.annotations.ServiceImpl;
 import org.chromium.chrome.browser.layouts.toolbar.ToolbarWidthConsumer;
+import org.chromium.chrome.browser.toolbar.top.ToolbarUtils.ToolbarComponentId;
 import org.chromium.chrome.browser.preferences.Pref;
 import org.chromium.chrome.browser.preferences.PrefServiceUtil;
 import org.chromium.chrome.browser.profiles.Profile;
@@ -54,6 +55,7 @@ import org.chromium.ui.modelutil.PropertyModelChangeProcessor;
 import org.chromium.ui.widget.AnchoredPopupWindow.HorizontalOrientation;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /** The implementation of {@link extensionsToolbarCoordinator}. */
@@ -81,6 +83,20 @@ public class ExtensionsToolbarCoordinatorImpl
     private final ActionListWidthConsumer mActionListWidthConsumer = new ActionListWidthConsumer();
     private final PoppedOutActionWidthConsumer mPoppedOutActionWidthConsumer =
             new PoppedOutActionWidthConsumer();
+
+    /**
+     * The four controls above, keyed for the toolbar that arbitrates them.
+     *
+     * <p>Declared after them because a field initialiser runs in declaration order, and a map built
+     * before its values exist would hold nulls.
+     */
+    private final Map<Integer, ToolbarWidthConsumer> mWidthConsumers =
+            Map.of(
+                    ToolbarComponentId.POPPED_EXTENSION_ACTION, mPoppedOutActionWidthConsumer,
+                    ToolbarComponentId.EXTENSIONS_MENU_BUTTON, mMenuButtonWidthConsumer,
+                    ToolbarComponentId.EXTENSIONS_REQUEST_ACCESS_BUTTON,
+                            mRequestAccessButtonWidthConsumer,
+                    ToolbarComponentId.EXTENSION_ACTION_LIST, mActionListWidthConsumer);
 
     private boolean mCanShowMenuIcon = true;
     private boolean mShowExtensionsMenuPending;
@@ -506,23 +522,8 @@ public class ExtensionsToolbarCoordinatorImpl
     }
 
     @Override
-    public ToolbarWidthConsumer getPoppedOutActionWidthConsumer() {
-        return mPoppedOutActionWidthConsumer;
-    }
-
-    @Override
-    public ToolbarWidthConsumer getMenuButtonWidthConsumer() {
-        return mMenuButtonWidthConsumer;
-    }
-
-    @Override
-    public ToolbarWidthConsumer getRequestAccessButtonWidthConsumer() {
-        return mRequestAccessButtonWidthConsumer;
-    }
-
-    @Override
-    public ToolbarWidthConsumer getActionListWidthConsumer() {
-        return mActionListWidthConsumer;
+    public Map<Integer, ToolbarWidthConsumer> getWidthConsumers() {
+        return mWidthConsumers;
     }
 
     /**

@@ -33,6 +33,8 @@ import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.browser.browser_controls.BrowserControlsStateProvider;
 import org.chromium.chrome.browser.browser_controls.BrowserStateBrowserControlsVisibilityDelegate;
 import org.chromium.chrome.browser.layouts.LayoutStateProvider;
+import org.chromium.chrome.browser.layouts.toolbar.ToolbarWidthConsumer;
+import org.chromium.chrome.browser.toolbar.top.ToolbarUtils.ToolbarComponentId;
 import org.chromium.chrome.browser.omnibox.LocationBar;
 import org.chromium.chrome.browser.omnibox.LocationBarCoordinator;
 import org.chromium.chrome.browser.omnibox.LocationBarEmbedder;
@@ -74,6 +76,8 @@ import org.chromium.ui.util.TokenHolder;
 import org.chromium.url.GURL;
 
 import java.util.function.Supplier;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Layout class that contains the base shared logic for manipulating the toolbar component. For
@@ -84,8 +88,25 @@ import java.util.function.Supplier;
 public abstract class ToolbarLayout extends FrameLayout
         implements Destroyable, TintObserver, ThemeColorObserver, LocationBarEmbedder {
     private @Nullable ToolbarColorObserver mToolbarColorObserver;
-
     private final int[] mTempPosition = new int[2];
+
+    /**
+     * Every toolbar control competing for width, indexed by the id the ranking in {@link
+     * ToolbarUtils#RANKED_TOOLBAR_COMPONENTS} uses.
+     *
+     * <p>This lives here rather than in a subclass because it is not a tablet concern. What a
+     * control competes against is decided by the ranking, which is shared; keeping the array
+     * alongside the ranking is what stops the two from disagreeing about which controls exist.
+     * A slot stays null when no control claims it, and the allocation loop skips those.
+     */
+    protected final @Nullable ToolbarWidthConsumer[] mToolbarWidthConsumers =
+            new ToolbarWidthConsumer[ToolbarComponentId.COUNT];
+
+    /**
+     * The ids this toolbar last installed from the extensions coordinator, so they can be cleared
+     * without asking the coordinator again, which may already be gone by then.
+     */
+    private Set<Integer> mExtensionsWidthComponentIds = Set.of();
 
     private final ColorStateList mDefaultTint;
 
@@ -195,15 +216,85 @@ public abstract class ToolbarLayout extends FrameLayout
     }
 
     /**
-     * Sets the {@link ExtensionsToolbarCoordinator}.
+     * Sets the {@link ExtensionsToolbarCoordinator}, and with it the controls that toolbar owns.
      *
      * <p>This method is not called if the extension toolbar is unavailable. If it is called, it is
      * after native initialization.
      *
+     * <p>The coordinator hands over every control it owns as one set, so installing them is a
+     * single step here rather than one line per control. A subclass that overrode this to name the
+     * controls individually was the reason a phone toolbar, which has no such override, silently
+     * arbitrated for none of them while a tablet did.
+     *
      * @param extensionsToolbarCoordinator The {@link ExtensionsToolbarCoordinator} to be set.
      */
     public void setExtensionsToolbarCoordinator(
-            @Nullable ExtensionsToolbarCoordinator extensionsToolbarCoordinator) {}
+            @Nullable ExtensionsToolbarCoordinator extensionsToolbarCoordinator) {
+        for (Integer componentId : mExtensionsWidthComponentIds) {
+            mToolbarWidthConsumers[componentId] = null;
+        }
+
+        Map<Integer, ToolbarWidthConsumer> widthConsumers =
+                extensionsToolbarCoordinator == null
+                        ? Map.of()
+                        : extensionsToolbarCoordinator.getWidthConsumers();
+        mExtensionsWidthComponentIds = widthConsumers.keySet();
+        for (Map.Entry<Integer, ToolbarWidthConsumer> consumer : widthConsumers.entrySet()) {
+            mToolbarWidthConsumers[consumer.getKey()] = consumer.getValue();
+        }
+    }
+
+    /**
+     * Re-allocates width after a control's visibility changed.
+     *
+     * <p>Called on both layouts. A control that appears or disappears changes how much width is
+     * left for everything else, so the allocation has to be redone rather than left as it was.
+     */
+    public void onWidthConsumerVisibilityChanged() {
+        if (!ToolbarUtils.isToolbarTabletResizeRefactorEnabled()) return;
+
+        int unspecifiedSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+        int width = Math.max(0, getWidth() - getControlContainerMargin());
+        allocateAvailableToolbarWidth(
+                mToolbarWidthConsumers, width, unspecifiedSpec, unspecifiedSpec);
+    }
+
+    /**
+     * The margin the control container carries, which is width the toolbar cannot hand out.
+     *
+     * <p>Zero unless a subclass places the container inside something that insets it.
+     */
+    protected int getControlContainerMargin() {
+        return 0;
+    }
+
+    /**
+     * Allocates available width to toolbar width consumers.
+     *
+     * <p>Walks the shared ranking and lets each control take what it needs from what is left, so a
+     * control lower in the ranking yields to one above it. The ranking rather than this method
+     * decides who wins, which is why it is a single shared list rather than a per-layout one.
+     *
+     * @param toolbarWidthConsumer The array of all toolbar width consumers.
+     * @param availableWidthDp The available width in dp.
+     * @param widthMeasureSpec The width measure spec to be used for measurement.
+     * @param heightMeasureSpec The height measure spec to be used for measurement.
+     */
+    protected static void allocateAvailableToolbarWidth(
+            @Nullable ToolbarWidthConsumer[] toolbarWidthConsumer,
+            int availableWidthDp,
+            int widthMeasureSpec,
+            int heightMeasureSpec) {
+        // Iterate through the toolbar components, which will show if there is enough available
+        // width.
+        for (@ToolbarComponentId int toolbarComponentId : ToolbarUtils.RANKED_TOOLBAR_COMPONENTS) {
+            @Nullable ToolbarWidthConsumer widthConsumer = toolbarWidthConsumer[toolbarComponentId];
+            if (widthConsumer == null) continue;
+            availableWidthDp -=
+                    widthConsumer.updateVisibility(
+                            availableWidthDp, widthMeasureSpec, heightMeasureSpec);
+        }
+    }
 
     /**
      * @param overlay The coordinator for the texture version of the top toolbar.

@@ -12,8 +12,10 @@ import org.chromium.build.annotations.Initializer;
 import org.chromium.build.annotations.NullMarked;
 import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.browser.layouts.toolbar.ToolbarWidthConsumer;
-import org.chromium.chrome.browser.ui.browser_window.ChromeAndroidTaskFeature;
+import org.chromium.chrome.browser.ui.browser_window.ChromeAndroidTask;
 import org.chromium.chrome.browser.ui.extensions.ExtensionUi;
+
+import java.util.Map;
 
 /**
  * The coordinator of the extension-related toolbar UI.
@@ -73,15 +75,19 @@ public interface ExtensionsToolbarCoordinator extends ChromeAndroidTaskFeature, 
     /** Shows the extensions menu programmatically. */
     void showExtensionsMenu();
 
-    /** Returns the {@link ToolbarWidthConsumer} for the popped out action. */
-    ToolbarWidthConsumer getPoppedOutActionWidthConsumer();
-
-    /** Returns the {@link ToolbarWidthConsumer} for the extensions menu icon. */
-    ToolbarWidthConsumer getMenuButtonWidthConsumer();
-
-    /** Returns the {@link ToolbarWidthConsumer} for the request access button. */
-    ToolbarWidthConsumer getRequestAccessButtonWidthConsumer();
-
-    /** Returns the {@link ToolbarWidthConsumer} for the action list container. */
-    ToolbarWidthConsumer getActionListWidthConsumer();
+    /**
+     * Returns every control of this toolbar that competes for toolbar width, keyed by the id the
+     * toolbar ranks components by.
+     *
+     * <p>This is one method rather than one per control because the set of controls belongs to this
+     * class alone. Four separate getters meant the knowledge existed in three places at once: here,
+     * in the implementation, and again in whichever toolbar was registering them. Adding a control
+     * meant editing all three, and a toolbar that forgot one simply did not arbitrate for it, with
+     * nothing to fail.
+     *
+     * <p>Returning the whole set lets the toolbar install what it is given, so the two cannot drift
+     * apart. The relative priority of these controls against the rest of the toolbar is not decided
+     * here; it is the toolbar's ranking.
+     */
+    Map<Integer, ToolbarWidthConsumer> getWidthConsumers();
 }

@@ -124,9 +124,6 @@ public class ToolbarTablet extends ToolbarLayout {
     private View.@Nullable OnClickListener mGlicClickListener;
     private View.@Nullable OnLongClickListener mGlicLongClickListener;
 
-    private final @Nullable ToolbarWidthConsumer[] mToolbarWidthConsumers =
-            new ToolbarWidthConsumer[ToolbarComponentId.COUNT];
-
     private boolean mIsDestroyed;
     private boolean mShowingFusebox;
 
@@ -467,27 +464,6 @@ public class ToolbarTablet extends ToolbarLayout {
     }
 
     @Override
-    public void setExtensionsToolbarCoordinator(
-            @Nullable ExtensionsToolbarCoordinator extensionsToolbarCoordinator) {
-        mExtensionsToolbarCoordinator = extensionsToolbarCoordinator;
-        if (mExtensionsToolbarCoordinator != null) {
-            mToolbarWidthConsumers[ToolbarComponentId.POPPED_EXTENSION_ACTION] =
-                    mExtensionsToolbarCoordinator.getPoppedOutActionWidthConsumer();
-            mToolbarWidthConsumers[ToolbarComponentId.EXTENSIONS_MENU_BUTTON] =
-                    mExtensionsToolbarCoordinator.getMenuButtonWidthConsumer();
-            mToolbarWidthConsumers[ToolbarComponentId.EXTENSIONS_REQUEST_ACCESS_BUTTON] =
-                    mExtensionsToolbarCoordinator.getRequestAccessButtonWidthConsumer();
-            mToolbarWidthConsumers[ToolbarComponentId.EXTENSION_ACTION_LIST] =
-                    mExtensionsToolbarCoordinator.getActionListWidthConsumer();
-        } else {
-            mToolbarWidthConsumers[ToolbarComponentId.POPPED_EXTENSION_ACTION] = null;
-            mToolbarWidthConsumers[ToolbarComponentId.EXTENSIONS_MENU_BUTTON] = null;
-            mToolbarWidthConsumers[ToolbarComponentId.EXTENSIONS_REQUEST_ACCESS_BUTTON] = null;
-            mToolbarWidthConsumers[ToolbarComponentId.EXTENSION_ACTION_LIST] = null;
-        }
-    }
-
-    @Override
     public void destroy() {
         mIsDestroyed = true;
 
@@ -550,47 +526,11 @@ public class ToolbarTablet extends ToolbarLayout {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
-    private int getControlContainerMargin() {
+    @Override
+    protected int getControlContainerMargin() {
         if (mToolbarTabletLayout == null) return 0;
         var lp = (MarginLayoutParams) mToolbarTabletLayout.getLayoutParams();
         return lp != null ? lp.leftMargin + lp.rightMargin : 0;
-    }
-
-    @Override
-    public void onWidthConsumerVisibilityChanged() {
-        assert !mIsDestroyed;
-
-        if (!ToolbarUtils.isToolbarTabletResizeRefactorEnabled()) return;
-
-        // Re-allocate width to account for a change in a width consumer's visibility.
-        int unspecifiedSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
-        int width = Math.max(0, getWidth() - getControlContainerMargin());
-        allocateAvailableToolbarWidth(
-                mToolbarWidthConsumers, width, unspecifiedSpec, unspecifiedSpec);
-    }
-
-    /**
-     * Allocates available width to toolbar width consumers.
-     *
-     * @param toolbarWidthConsumer The array of all toolbar width consumers.
-     * @param availableWidthDp The available width in dp.
-     * @param widthMeasureSpec The width measure spec to be used for measurement.
-     * @param heightMeasureSpec The height measure spec to be used for measurement.
-     */
-    static void allocateAvailableToolbarWidth(
-            @Nullable ToolbarWidthConsumer[] toolbarWidthConsumer,
-            int availableWidthDp,
-            int widthMeasureSpec,
-            int heightMeasureSpec) {
-        // Iterate through the toolbar components, which will show if there is enough available
-        // width.
-        for (@ToolbarComponentId int toolbarComponentId : ToolbarUtils.RANKED_TOOLBAR_COMPONENTS) {
-            @Nullable ToolbarWidthConsumer widthConsumer = toolbarWidthConsumer[toolbarComponentId];
-            if (widthConsumer == null) continue;
-            availableWidthDp -=
-                    widthConsumer.updateVisibility(
-                            availableWidthDp, widthMeasureSpec, heightMeasureSpec);
-        }
     }
 
     @Override
