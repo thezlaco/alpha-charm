@@ -1021,44 +1021,44 @@ public class ToolbarManager
                     mUpdateMenuItemHelper.onMenuButtonClicked();
                 };
 
+        // The regular and the overview-mode buttons are the same button built twice, and differ
+        // only in the theme colours they read and the view they anchor to. Everything else was
+        // written out for each, which is what makes the difference between them easy to miss.
+        //
+        // This is a local class rather than a method because most of what the two coordinators
+        // share is a constructor parameter or a local of this constructor, and neither is
+        // reachable from a method.
+        class MenuButtonFactory {
+            MenuButtonCoordinator create(ThemeColorProvider themeColorProvider, int anchorViewId) {
+                return new MenuButtonCoordinator(
+                        mActivity,
+                        appMenuCoordinatorSupplier,
+                        mControlsVisibilityDelegate,
+                        mWindowAndroid,
+                        ToolbarManager.this::endFuseboxInput,
+                        requestFocusRunnable,
+                        canShowUpdateBadge,
+                        isInOverviewModeSupplier,
+                        themeColorProvider,
+                        mIncognitoStateProvider,
+                        menuButtonStateSupplier,
+                        onMenuButtonClicked,
+                        anchorViewId,
+                        menuButtonVisibilityDelegate,
+                        /* isWebApp= */ false);
+            }
+        }
+        MenuButtonFactory menuButtonFactory = new MenuButtonFactory();
+
         mMenuButtonCoordinator =
-                createMenuButtonCoordinator(
-                        menuButtonThemeColorProvider, R.id.menu_button_wrapper);
-    /**
-     * Builds a menu button coordinator for one of the two menu buttons.
-     *
-     * <p>The regular and the overview-mode buttons are the same button built twice, and differ only
-     * in the theme colours they read and the view they anchor to. Everything else was written out
-     * for each, which is what makes the difference between them easy to miss.
-     */
-    private MenuButtonCoordinator createMenuButtonCoordinator(
-            ThemeColorProvider themeColorProvider, int anchorViewId) {
-        return new MenuButtonCoordinator(
-                mActivity,
-                appMenuCoordinatorSupplier,
-                mControlsVisibilityDelegate,
-                mWindowAndroid,
-                this::endFuseboxInput,
-                requestFocusRunnable,
-                canShowUpdateBadge,
-                isInOverviewModeSupplier,
-                themeColorProvider,
-                mIncognitoStateProvider,
-                menuButtonStateSupplier,
-                onMenuButtonClicked,
-                anchorViewId,
-                menuButtonVisibilityDelegate,
-                /* isWebApp= */ false);
-    }
+                menuButtonFactory.create(menuButtonThemeColorProvider, R.id.menu_button_wrapper);
 
         if (canShowUpdateBadge) mMenuStateObserver = mMenuButtonCoordinator.getStateObserver();
 
         // TODO(crbug.com/351005760): Investigate the feasibility of replacing
         // mOverviewModeMenuButtonCoordinator with mMenuButtonCoordinator when Hub is enabled.
-        // TODO(crbug.com/351005760): Investigate the feasibility of replacing
-        // mOverviewModeMenuButtonCoordinator with mMenuButtonCoordinator when Hub is enabled.
         mOverviewModeMenuButtonCoordinator =
-                createMenuButtonCoordinator(overviewModeThemeColorProvider, R.id.none);
+                menuButtonFactory.create(overviewModeThemeColorProvider, R.id.none);
 
         ToggleTabStackButton tabSwitcherButton =
                 mControlContainer.findViewById(R.id.tab_switcher_button);
