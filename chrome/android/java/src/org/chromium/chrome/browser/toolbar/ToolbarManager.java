@@ -1022,43 +1022,43 @@ public class ToolbarManager
                 };
 
         mMenuButtonCoordinator =
-                new MenuButtonCoordinator(
-                        mActivity,
-                        appMenuCoordinatorSupplier,
-                        mControlsVisibilityDelegate,
-                        mWindowAndroid,
-                        this::endFuseboxInput,
-                        requestFocusRunnable,
-                        canShowUpdateBadge,
-                        isInOverviewModeSupplier,
-                        menuButtonThemeColorProvider,
-                        mIncognitoStateProvider,
-                        menuButtonStateSupplier,
-                        onMenuButtonClicked,
-                        R.id.menu_button_wrapper,
-                        menuButtonVisibilityDelegate,
-                        /* isWebApp= */ false);
+                createMenuButtonCoordinator(
+                        menuButtonThemeColorProvider, R.id.menu_button_wrapper);
+    /**
+     * Builds a menu button coordinator for one of the two menu buttons.
+     *
+     * <p>The regular and the overview-mode buttons are the same button built twice, and differ only
+     * in the theme colours they read and the view they anchor to. Everything else was written out
+     * for each, which is what makes the difference between them easy to miss.
+     */
+    private MenuButtonCoordinator createMenuButtonCoordinator(
+            ThemeColorProvider themeColorProvider, int anchorViewId) {
+        return new MenuButtonCoordinator(
+                mActivity,
+                appMenuCoordinatorSupplier,
+                mControlsVisibilityDelegate,
+                mWindowAndroid,
+                this::endFuseboxInput,
+                requestFocusRunnable,
+                canShowUpdateBadge,
+                isInOverviewModeSupplier,
+                themeColorProvider,
+                mIncognitoStateProvider,
+                menuButtonStateSupplier,
+                onMenuButtonClicked,
+                anchorViewId,
+                menuButtonVisibilityDelegate,
+                /* isWebApp= */ false);
+    }
+
         if (canShowUpdateBadge) mMenuStateObserver = mMenuButtonCoordinator.getStateObserver();
 
         // TODO(crbug.com/351005760): Investigate the feasibility of replacing
         // mOverviewModeMenuButtonCoordinator with mMenuButtonCoordinator when Hub is enabled.
+        // TODO(crbug.com/351005760): Investigate the feasibility of replacing
+        // mOverviewModeMenuButtonCoordinator with mMenuButtonCoordinator when Hub is enabled.
         mOverviewModeMenuButtonCoordinator =
-                new MenuButtonCoordinator(
-                        mActivity,
-                        appMenuCoordinatorSupplier,
-                        mControlsVisibilityDelegate,
-                        mWindowAndroid,
-                        this::endFuseboxInput,
-                        requestFocusRunnable,
-                        canShowUpdateBadge,
-                        isInOverviewModeSupplier,
-                        overviewModeThemeColorProvider,
-                        mIncognitoStateProvider,
-                        menuButtonStateSupplier,
-                        onMenuButtonClicked,
-                        R.id.none,
-                        menuButtonVisibilityDelegate,
-                        /* isWebApp= */ false);
+                createMenuButtonCoordinator(overviewModeThemeColorProvider, R.id.none);
 
         ToggleTabStackButton tabSwitcherButton =
                 mControlContainer.findViewById(R.id.tab_switcher_button);
@@ -2679,6 +2679,11 @@ public class ToolbarManager
                                                 tabModelProfile,
                                                 (ActivityWindowAndroid) mWindowAndroid),
                                         () ->
+                                                // The extensions coordinator needs a ViewGroup,
+                                                // ToolbarLayout - the base of ToolbarPhone and
+                                                // ToolbarTablet - already is one. The cast to
+                                                // ToolbarTablet was load-bearing for nothing and
+                                                // threw ClassCastException on phones.
                                                 ExtensionsToolbarCoordinator.maybeCreate(
                                                         new ExtensionsToolbarInitParams(
                                                                 mActivity,
@@ -2690,12 +2695,6 @@ public class ToolbarManager
                                                                 mTabCreatorManager.getTabCreator(
                                                                         false),
                                                                 getBrowsingModeThemeColorProvider(),
-                                                                // The extensions coordinator only needs
-                                                                // a ViewGroup, and ToolbarLayout - the
-                                                                // common base of ToolbarPhone and
-                                                                // ToolbarTablet - already is one. The cast
-                                                                // was load-bearing for nothing and threw
-                                                                // ClassCastException on phones.
                                                                 mToolbarLayout,
                                                                 contextMenuPopulatorFactory,
                                                                 selectionDropdownMenuDelegate,
