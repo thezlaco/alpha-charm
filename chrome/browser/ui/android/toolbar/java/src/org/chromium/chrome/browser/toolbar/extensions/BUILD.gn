@@ -18,6 +18,7 @@ android_library("java") {
   sources = [
     "ExtensionAccessControlButtonCoordinator.java",
     "ExtensionAccessControlButtonMediator.java",
+    "ExtensionAccessControlButtonParams.java",
     "ExtensionAccessControlButtonViewBinder.java",
     "ExtensionActionButtonProperties.java",
     "ExtensionActionButtonViewBinder.java",

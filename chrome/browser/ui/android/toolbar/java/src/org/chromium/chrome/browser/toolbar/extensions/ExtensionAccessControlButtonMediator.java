@@ -62,12 +62,13 @@ class ExtensionAccessControlButtonMediator implements Destroyable {
             };
 
     public ExtensionAccessControlButtonMediator(
-            Context context,
-            PropertyModel model,
-            NullableObservableSupplier<Tab> currentTabSupplier,
-            ExtensionsToolbarBridge extensionsToolbarBridge,
-            Callback<Boolean> visibilityObserver,
-            Supplier<Boolean> isWindowCompactSupplier) {
+            Context context, ExtensionAccessControlButtonParams params) {
+        PropertyModel model = params.model;
+        NullableObservableSupplier<Tab> currentTabSupplier = params.currentTabSupplier;
+        ExtensionsToolbarBridge extensionsToolbarBridge = params.extensionsToolbarBridge;
+        Callback<Boolean> visibilityObserver = params.visibilityObserver;
+        Supplier<Boolean> isWindowCompactSupplier = params.isWindowCompactSupplier;
+
         mContext = context;
         mCurrentTabSupplier = currentTabSupplier;
         mExtensionsToolbarBridge = extensionsToolbarBridge;

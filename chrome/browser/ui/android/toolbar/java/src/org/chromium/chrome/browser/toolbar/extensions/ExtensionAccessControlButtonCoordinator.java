@@ -35,25 +35,17 @@ public class ExtensionAccessControlButtonCoordinator implements Destroyable {
      * @param visibilityObserver The observer to be notified of visibility changes.
      */
     public ExtensionAccessControlButtonCoordinator(
-            PropertyModel model,
-            NullableObservableSupplier<Tab> currentTabSupplier,
-            ExtensionsToolbarBridge extensionsToolbarBridge,
-            TextView requestAccessButton,
-            Callback<Boolean> visibilityObserver,
-            Supplier<Boolean> isWindowCompactSupplier) {
+            ExtensionAccessControlButtonParams params, TextView requestAccessButton) {
 
         mChangeProcessor =
                 PropertyModelChangeProcessor.create(
-                        model, requestAccessButton, ExtensionAccessControlButtonViewBinder::bind);
+                        params.model,
+                        requestAccessButton,
+                        ExtensionAccessControlButtonViewBinder::bind);
 
         mMediator =
                 new ExtensionAccessControlButtonMediator(
-                        requestAccessButton.getContext(),
-                        model,
-                        currentTabSupplier,
-                        extensionsToolbarBridge,
-                        visibilityObserver,
-                        isWindowCompactSupplier);
+                        requestAccessButton.getContext(), params);
     }
 
     public void requestVisibilityUpdate() {
