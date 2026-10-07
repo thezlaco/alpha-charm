@@ -30,6 +30,8 @@ change so far.
 | `Compile this repository instead of a tree that is never created` | Makes `tools/build.sh` and the workflow build the checkout they live in |
 | `Free disk before the checkout rather than after` | Reclaims runner disk before the largest step rather than after it |
 | `Compile the native side in parts` | Turns on `is_component_build`, the one remaining lever on how much disk a build needs |
+| `One implementation of width arbitration, in the base class` | Puts the consumer array, the registration and the allocation in `ToolbarLayout`, and stops the tree not compiling on a method declared only on `ToolbarTablet` |
+| `Let the phone toolbar allocate width too` | Gives `ToolbarPhone` the ranked width allocation it never called, so extension controls yield instead of clipping |
 | `Point the notes at places that exist` | Removes references to files this repository never had |
 
 None of this is the interesting part of the project. It is recorded here because
