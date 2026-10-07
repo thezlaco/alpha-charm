@@ -21,7 +21,6 @@ import org.chromium.chrome.browser.ui.browser_window.ChromeAndroidTask;
 import org.chromium.chrome.browser.ui.extensions.ExtensionActionContextMenuBridge;
 import org.chromium.chrome.browser.ui.extensions.ExtensionsMenuBridge;
 import org.chromium.chrome.browser.ui.extensions.ExtensionsMenuTypes;
-import org.chromium.chrome.browser.ui.extensions.ExtensionsToolbarBridge;
 import org.chromium.components.embedder_support.util.UrlConstants;
 import org.chromium.content_public.browser.LoadUrlParams;
 import org.chromium.content_public.browser.WebContents;
@@ -58,7 +57,7 @@ class ExtensionsMenuMediator implements Destroyable, ExtensionsMenuBridge.Observ
      * @param actionModels The model list to populate with extension actions.
      * @param mainPageModel The property model for the menu.
      * @param sitePermissionsPropertyModel The property model for the site permissions page.
-     * @param dismissRunnable A runnable to dismiss the menu.
+     * @param onDismissMenu A runnable to dismiss the menu.
      * @param onReady A runnable to run when the menu is ready to be shown.
      */
     public ExtensionsMenuMediator(

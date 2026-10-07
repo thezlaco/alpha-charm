@@ -37,7 +37,6 @@ public class ExtensionActionDragHelper implements View.OnAttachStateChangeListen
     /**
      * @param context Context for resources and touch slop.
      * @param itemTouchHelper Helper to start the drag interaction.
-     * @param recyclerView The RecyclerView containing the actions.
      * @param viewHolder The specific {@code ViewHolder} object that wraps and manages the action
      *     button view instance.
      */

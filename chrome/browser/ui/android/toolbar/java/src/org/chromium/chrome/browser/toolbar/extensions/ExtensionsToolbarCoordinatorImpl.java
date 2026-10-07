@@ -15,7 +15,6 @@ import android.os.Looper;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewStub;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -467,7 +466,6 @@ public class ExtensionsToolbarCoordinatorImpl
                         showIphInternalHelper(
                                 activity, view, handler, pinnedByDefaultIphCommand(view)));
     }
-
 
     private void saveMenuButtonPinState(boolean pinned) {
         mPrefService.setBoolean(Pref.PIN_EXTENSIONS_MENU_BUTTON, pinned);
