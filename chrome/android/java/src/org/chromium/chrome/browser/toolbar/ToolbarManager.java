@@ -177,6 +177,7 @@ import org.chromium.chrome.browser.toolbar.bottom.BottomControlsContentDelegate;
 import org.chromium.chrome.browser.toolbar.bottom.BottomControlsCoordinator;
 import org.chromium.chrome.browser.toolbar.bottom.ScrollingBottomViewResourceFrameLayout;
 import org.chromium.chrome.browser.toolbar.extensions.ExtensionsToolbarCoordinator;
+import org.chromium.chrome.browser.toolbar.extensions.ExtensionsToolbarInitParams;
 import org.chromium.chrome.browser.toolbar.forward_button.ForwardButtonCoordinator;
 import org.chromium.chrome.browser.toolbar.home_button.HomeButtonCoordinator;
 import org.chromium.chrome.browser.toolbar.load_progress.LoadProgressCoordinator;
@@ -2679,24 +2680,28 @@ public class ToolbarManager
                                                 (ActivityWindowAndroid) mWindowAndroid),
                                         () ->
                                                 ExtensionsToolbarCoordinator.maybeCreate(
-                                                        mActivity,
-                                                        extensionsToolbarStub,
-                                                        mWindowAndroid,
-                                                        task,
-                                                        tabModelProfile,
-                                                        mActivityTabProvider.asObservable(),
-                                                        mTabCreatorManager.getTabCreator(false),
-                                                        getBrowsingModeThemeColorProvider(),
-                                                        // The extensions coordinator only needs a ViewGroup, and
-                                                        // ToolbarLayout - the common base of ToolbarPhone and
-                                                        // ToolbarTablet - already is one. The cast was load-bearing
-                                                        // for nothing and threw ClassCastException on phones.
-                                                        mToolbarLayout,
-                                                        contextMenuPopulatorFactory,
-                                                        selectionDropdownMenuDelegate,
-                                                        mTabModelSelector,
-                                                        mModalDialogManagerSupplier.get(),
-                                                        cleanup));
+                                                        new ExtensionsToolbarInitParams(
+                                                                mActivity,
+                                                                extensionsToolbarStub,
+                                                                mWindowAndroid,
+                                                                task,
+                                                                tabModelProfile,
+                                                                mActivityTabProvider.asObservable(),
+                                                                mTabCreatorManager.getTabCreator(
+                                                                        false),
+                                                                getBrowsingModeThemeColorProvider(),
+                                                                // The extensions coordinator only needs
+                                                                // a ViewGroup, and ToolbarLayout - the
+                                                                // common base of ToolbarPhone and
+                                                                // ToolbarTablet - already is one. The cast
+                                                                // was load-bearing for nothing and threw
+                                                                // ClassCastException on phones.
+                                                                mToolbarLayout,
+                                                                contextMenuPopulatorFactory,
+                                                                selectionDropdownMenuDelegate,
+                                                                mTabModelSelector,
+                                                                mModalDialogManagerSupplier.get(),
+                                                                cleanup)));
                 if (mExtensionsToolbarCoordinator != null) {
                     mToolbar.setExtensionsToolbarCoordinator(mExtensionsToolbarCoordinator);
                 }

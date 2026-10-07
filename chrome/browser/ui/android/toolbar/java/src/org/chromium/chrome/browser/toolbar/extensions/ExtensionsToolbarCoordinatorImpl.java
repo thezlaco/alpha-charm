@@ -110,30 +110,32 @@ public class ExtensionsToolbarCoordinatorImpl
     private @Nullable Runnable mOnFeatureRemoved;
 
     @Override
-    public void initializeWithNative(
-            Context context,
-            ViewStub extensionsToolbarStub,
-            WindowAndroid windowAndroid,
-            ChromeAndroidTask task,
-            Profile profile,
-            NullableObservableSupplier<Tab> currentTabSupplier,
-            TabCreator tabCreator,
-            ThemeColorProvider themeColorProvider,
-            ViewGroup rootView,
-            @Nullable ContextMenuPopulatorFactory contextMenuPopulatorFactory,
-            @Nullable SelectionDropdownMenuDelegate selectionDropdownMenuDelegate,
-            TabModelSelector tabModelSelector,
-            ModalDialogManager modalDialogManager,
-            @Nullable Runnable onFeatureRemoved) {
-        mBridge = new ExtensionActionsBridge(task, profile);
+    public void initializeWithNative(ExtensionsToolbarInitParams params) {
+        Context context = params.context;
+        ChromeAndroidTask task = params.task;
+        Profile profile = params.profile;
+        WindowAndroid windowAndroid = params.windowAndroid;
+        TabModelSelector tabModelSelector = params.tabModelSelector;
+        ViewGroup rootView = params.rootView;
+        NullableObservableSupplier<Tab> currentTabSupplier = params.currentTabSupplier;
+        TabCreator tabCreator = params.tabCreator;
+        ThemeColorProvider themeColorProvider = params.themeColorProvider;
+        ModalDialogManager modalDialogManager = params.modalDialogManager;
+
+        final ContextMenuPopulatorFactory contextMenuPopulatorFactory =
+                params.contextMenuPopulatorFactory;
+        final SelectionDropdownMenuDelegate selectionDropdownMenuDelegate =
+                params.selectionDropdownMenuDelegate;
+
         mWindowAndroid = windowAndroid;
         mProfile = profile;
-        mCurrentTabSupplier = currentTabSupplier;
-        mOnFeatureRemoved = onFeatureRemoved;
+        mCurrentTabSupplier = params.currentTabSupplier;
+        mOnFeatureRemoved = params.onFeatureRemoved;
 
-        extensionsToolbarStub.setLayoutResource(R.layout.extensions_toolbar_container);
-        mContainer = (LinearLayout) extensionsToolbarStub.inflate();
+        mBridge = new ExtensionActionsBridge(task, profile);
 
+        params.extensionsToolbarStub.setLayoutResource(R.layout.extensions_toolbar_container);
+        mContainer = (LinearLayout) params.extensionsToolbarStub.inflate();
         mExtensionsToolbarBridge = new ExtensionsToolbarBridge(task, profile);
         mExtensionsToolbarBridge.addObserver(mExtensionsToolbarBridgeObserver);
 

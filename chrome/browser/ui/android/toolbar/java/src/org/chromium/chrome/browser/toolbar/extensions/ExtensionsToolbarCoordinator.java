@@ -4,30 +4,16 @@
 
 package org.chromium.chrome.browser.toolbar.extensions;
 
-import android.content.Context;
 import android.view.KeyEvent;
-import android.view.ViewGroup;
-import android.view.ViewStub;
 
 import org.chromium.base.ServiceLoaderUtil;
 import org.chromium.base.lifetime.Destroyable;
-import org.chromium.base.supplier.NullableObservableSupplier;
 import org.chromium.build.annotations.Initializer;
 import org.chromium.build.annotations.NullMarked;
 import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.browser.layouts.toolbar.ToolbarWidthConsumer;
-import org.chromium.chrome.browser.profiles.Profile;
-import org.chromium.chrome.browser.tab.Tab;
-import org.chromium.chrome.browser.tabmodel.TabCreator;
-import org.chromium.chrome.browser.tabmodel.TabModelSelector;
-import org.chromium.chrome.browser.theme.ThemeColorProvider;
-import org.chromium.chrome.browser.ui.browser_window.ChromeAndroidTask;
 import org.chromium.chrome.browser.ui.browser_window.ChromeAndroidTaskFeature;
 import org.chromium.chrome.browser.ui.extensions.ExtensionUi;
-import org.chromium.components.embedder_support.contextmenu.ContextMenuPopulatorFactory;
-import org.chromium.content_public.browser.selection.SelectionDropdownMenuDelegate;
-import org.chromium.ui.base.WindowAndroid;
-import org.chromium.ui.modaldialog.ModalDialogManager;
 
 /**
  * The coordinator of the extension-related toolbar UI.
@@ -45,23 +31,9 @@ import org.chromium.ui.modaldialog.ModalDialogManager;
 public interface ExtensionsToolbarCoordinator extends ChromeAndroidTaskFeature, Destroyable {
     /** Instantiates the implementation if it is available. */
     @Nullable
-    static ExtensionsToolbarCoordinator maybeCreate(
-            Context context,
-            ViewStub extensionsToolbarStub,
-            WindowAndroid windowAndroid,
-            ChromeAndroidTask task,
-            Profile profile,
-            NullableObservableSupplier<Tab> currentTabSupplier,
-            TabCreator tabCreator,
-            ThemeColorProvider themeColorProvider,
-            ViewGroup rootView,
-            @Nullable ContextMenuPopulatorFactory contextMenuPopulatorFactory,
-            @Nullable SelectionDropdownMenuDelegate selectionDropdownMenuDelegate,
-            TabModelSelector tabModelSelector,
-            ModalDialogManager modalDialogManager,
-            @Nullable Runnable onFeatureRemoved) {
+    static ExtensionsToolbarCoordinator maybeCreate(ExtensionsToolbarInitParams params) {
         // Check if the extension UI is enabled first.
-        if (!ExtensionUi.isEnabled(profile)) {
+        if (!ExtensionUi.isEnabled(params.profile)) {
             return null;
         }
 
@@ -70,21 +42,7 @@ public interface ExtensionsToolbarCoordinator extends ChromeAndroidTaskFeature, 
         if (coordinator == null) {
             return null;
         }
-        coordinator.initializeWithNative(
-                context,
-                extensionsToolbarStub,
-                windowAndroid,
-                task,
-                profile,
-                currentTabSupplier,
-                tabCreator,
-                themeColorProvider,
-                rootView,
-                contextMenuPopulatorFactory,
-                selectionDropdownMenuDelegate,
-                tabModelSelector,
-                modalDialogManager,
-                onFeatureRemoved);
+        coordinator.initializeWithNative(params);
         return coordinator;
     }
 
@@ -95,21 +53,7 @@ public interface ExtensionsToolbarCoordinator extends ChromeAndroidTaskFeature, 
      * illegal to call it multiple times. It is guaranteed to be called after native initialization.
      */
     @Initializer
-    void initializeWithNative(
-            Context context,
-            ViewStub extensionsToolbarStub,
-            WindowAndroid windowAndroid,
-            ChromeAndroidTask task,
-            Profile profile,
-            NullableObservableSupplier<Tab> currentTabSupplier,
-            TabCreator tabCreator,
-            ThemeColorProvider themeColorProvider,
-            ViewGroup rootView,
-            @Nullable ContextMenuPopulatorFactory contextMenuPopulatorFactory,
-            @Nullable SelectionDropdownMenuDelegate selectionDropdownMenuDelegate,
-            TabModelSelector tabModelSelector,
-            ModalDialogManager modalDialogManager,
-            @Nullable Runnable onFeatureRemoved);
+    void initializeWithNative(ExtensionsToolbarInitParams params);
 
     /**
      * Dispatches the key event to trigger the corresponding extension action if any.
