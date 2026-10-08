@@ -119,6 +119,15 @@ say "the files gn read"
 [ -f "$OUT_DIR/build.ninja.d" ] ||
   die "the gn edge ran but left no build.ninja.d, so the files it read are still unknown."
 
+say "whether the graph still resolves"
+# -n is a dry run. ninja resolves every rule and every input and prints the
+# commands it would run without running one, so a missing input becomes an error
+# here instead of a line in a list. `ninja -t inputs` above would have reported
+# the same path as present or absent without caring, which is the difference
+# between counting files and checking that the tree can still be built from.
+"$NINJA" -C "$OUT_DIR" -n "$NINJA_TARGET" > "$OUT_DIR/ninja-dry-run.txt"
+printf '%d commands the build would run\n' "$(grep -c . "$OUT_DIR/ninja-dry-run.txt")"
+
 say "which of those the repository actually holds"
 # Counting and reporting are both done here, rather than counting in python and
 # printing from the shell. The previous version printed four bare numbers and the
