@@ -211,12 +211,33 @@ for path in gn_read:
     if found:
         gn_in_tree.add(found)
 
-closure = in_tree | gn_in_tree
+# A third kind of file, and the one whose absence is invisible until something
+# tries to fetch. DEPS names files inside this repository that are neither build
+# inputs nor anything gn reads: the version_file of a CIPD package is the
+# version, so deleting it deletes the pin rather than any code. gclient then
+# fails to parse DEPS at all, which is not a build failure and looks like none.
+#
+# Collected textually rather than by executing DEPS, since DEPS is a Python file
+# that calls into gclient's own helpers. A superset is the safe direction to err
+# in here: keeping a file gclient did not need costs fourteen files.
+import re
+
+with open(os.path.join(repo_dir, "DEPS"), encoding="utf-8", errors="replace") as handle:
+    deps_text = handle.read()
+
+deps_refs = set()
+for pattern in (r"'src/([^'/\s]+/[^'/\s]*)'", r"'version_file'\s*:\s*'([^']+)'", r"'src_path'\s*:\s*'([^']+)'"):
+    deps_refs.update(re.findall(pattern, deps_text))
+deps_refs = {ref for ref in deps_refs if ref in tracked}
+deps_lost = sorted(deps_refs - gn_in_tree - in_tree)
+
+closure = in_tree | gn_in_tree | deps_refs
 
 for name, paths in (
     ("repo-inputs.txt", in_tree),
     ("gn-read.txt", gn_in_tree),
     ("closure.txt", closure),
+    ("deps-refs.txt", deps_refs),
     ("non-repo-inputs.txt", elsewhere),
 ):
     with open(os.path.join(out_dir, name), "w", encoding="utf-8") as handle:
@@ -254,6 +275,13 @@ print("%d targets reached, needing %d BUILD files" % (len(labels), len(wanted)))
 print("%d of those absent from the list gn read, which would mean the list is short"
       % len(absent))
 for name in absent[:10]:
+    print("    absent: %s" % name)
+
+# A file DEPS names and the tree does not hold makes gclient unable to parse
+# DEPS, so this is checked the way the BUILD files are: by name.
+print("%d files DEPS names in this repository, %d of them outside the closure"
+      % (len(deps_refs), len(deps_lost)))
+for name in deps_lost[:10]:
     print("    absent: %s" % name)
 
 if tracked:
