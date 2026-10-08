@@ -235,8 +235,14 @@ with open(os.path.join(repo_dir, "DEPS"), encoding="utf-8", errors="replace") as
     deps_text = handle.read()
 
 deps_refs = set()
-for pattern in (r"'src/([^'/\s]+/[^'/\s]*)'", r"'version_file'\s*:\s*'([^']+)'", r"'src_path'\s*:\s*'([^']+)'"):
+for pattern in (r"'src/([^'\s]+)'", r"'version_file'\s*:\s*'([^']+)'", r"'src_path'\s*:\s*'([^']+)'"):
     deps_refs.update(re.findall(pattern, deps_text))
+# Any number of path components, then filtered by being a file of this tree.
+# Requiring two of them, as an earlier version did, missed `.vpython3`, which is
+# named by a hook action as a single component and which gclient fails to read
+# DEPS without: the fetch dies on it before fetching anything. A dep directory
+# key and the tail of a git URL both match the pattern and neither is a file, so
+# the filter is what tells them apart.
 deps_refs = {ref for ref in deps_refs if ref in tracked}
 deps_lost = sorted(deps_refs - gn_in_tree - in_tree)
 
