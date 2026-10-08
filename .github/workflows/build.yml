@@ -78,13 +78,19 @@ jobs:
         working-directory: src
         run: ./build/install-build-deps.sh --no-prompt
 
-      # Beside the checkout, which is where tools/fetch-deps.sh and
-      # tools/build.sh both look for it.
+      # Cloned into the workspace root, which is where tools/fetch-deps.sh looks
+      # and where gclient writes .gclient. That root is GITHUB_WORKSPACE itself
+      # and not its parent, because the checkout is src inside it: the workspace
+      # is the directory containing src, so with the checkout moved down a level
+      # everything that belongs to the workspace moved with it.
+      #
+      # Outside the checkout, which is src, so it cannot end up in the tree that
+      # gn measures.
       - name: Install depot_tools
         run: |
           git clone --depth=1 \
             https://chromium.googlesource.com/chromium/tools/depot_tools.git \
-            "$GITHUB_WORKSPACE/../depot_tools"
+            "$GITHUB_WORKSPACE/depot_tools"
 
       # The main repository alone is not a buildable tree. This is what puts the
       # NDK, android_deps and the toolchain in place, and it is the step that was
