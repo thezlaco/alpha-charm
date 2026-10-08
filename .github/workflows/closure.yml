@@ -104,6 +104,23 @@ jobs:
           du -sh src/buildtools src/third_party src/.cipd 2>/dev/null || true
           df -h /
 
+      # Before gn gen, not after, and that ordering is the whole point. This
+      # step is the only one that can see a file gn checks for existence without
+      # reading, and it was running after the step whose failure it would have
+      # explained: gn gen died on //build/modules/android-arm64/BUILD.gn, which
+      # no measurement had counted, and the scan that finds it had not run yet.
+      # A diagnostic placed after the thing it diagnoses is a diagnostic that
+      # arrives one failure late.
+      #
+      # Reports rather than fails. It reads a configuration file pointing at
+      # something that is gone, and whether that is a defect depends on what the
+      # reference is for: a path gclient fetches resolves after the sync, and a
+      # label written //dir:target is not a path. Judging it here would mean
+      # guessing, and the list is short enough to read.
+      - name: References to what is gone
+        working-directory: src
+        run: ./tools/verify-tree.sh
+
       - name: Measure closure
         working-directory: src
         run: ./tools/closure.sh
