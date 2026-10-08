@@ -34,18 +34,17 @@ jobs:
     # the job fails on disk long before this matters.
     timeout-minutes: 360
 
-    # The checkout is in src, because DEPS resolves its paths against a solution
-    # by that name, so the steps below run there. Steps that name absolute paths
-    # are unaffected; the ones that call ./tools need it.
-    defaults:
-      run:
-        working-directory: src
 
     steps:
       # Recover disk before anything else, including the checkout. This
       # repository is 5.5 GB across 509 570 files, so the checkout itself needs
       # room; freeing space after it would mean freeing it once the disk is
       # already full. What is removed here is software this job never invokes.
+      # This step and everything before it run before src exists, so they take no
+      # working directory of their own. The steps below it, which call ./tools and
+      # ./build, are inside the checkout; declaring src as the job default instead
+      # would apply it here too and the step would fail to start against a
+      # directory that has not been created yet.
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
@@ -76,6 +75,7 @@ jobs:
       # `android` to it was accepted by an older version and is rejected by this
       # one, which is what stopped this job before it reached the checkout.
       - name: Install host dependencies
+        working-directory: src
         run: ./build/install-build-deps.sh --no-prompt
 
       # Beside the checkout, which is where tools/fetch-deps.sh and
@@ -90,9 +90,11 @@ jobs:
       # NDK, android_deps and the toolchain in place, and it is the step that was
       # missing, which is why the workflow referenced a tool that never existed.
       - name: Fetch dependencies
+        working-directory: src
         run: ./tools/fetch-deps.sh
 
       - name: Build
+        working-directory: src
         run: ./tools/build.sh
 
       - uses: actions/upload-artifact@v4

@@ -9,11 +9,18 @@
 # answers are the ones a static reader cannot, namely which targets are reached
 # at all and which files each of them contributes.
 #
-# The result is three numbers, because they are not the same question:
+# The result is four numbers, because they are not the same question:
 #
-#   targets    how many build targets the browser is made of
-#   inputs     how many files those targets name
-#   closure    how much of the repository that is, as a share of the tree
+#   targets     how many build targets the browser is made of
+#   inputs      how many files those targets name, generated ones included
+#   in tree     how many of those files the repository actually contains
+#   closure     the last number as a share of the committed tree
+#
+# The third is the one that answers the question removal decisions rest on. An
+# input that ninja reports may be a source file in this repository, a file a
+# build step generates into the output directory, or part of the toolchain; the
+# last two are not in the repository and cannot be deleted from it, so counting
+# them would inflate the figure being used to decide what to cut.
 #
 # Usage:
 #   tools/closure.sh
@@ -48,7 +55,11 @@ export PATH="$REPO_DIR/third_party/ninja:$PATH"
 command -v gn >/dev/null 2>&1 ||
   die "gn not found. Run tools/fetch-deps.sh, which puts it in the tree."
 
-[ -x third_party/cpython3/host/bin/python3 ] ||
+# The tree's own python, which .gn already names as script_executable. Used
+# rather than the system one so that the counting agrees with gn on what the
+# build scripts see.
+PYTHON="$REPO_DIR/third_party/cpython3/host/bin/python3"
+[ -x "$PYTHON" ] ||
   die "third_party/cpython3 is absent. Run tools/fetch-deps.sh first."
 
 say "gn gen ${OUT_DIR}"
@@ -82,15 +93,70 @@ NINJA_TARGET="${TARGET#//}"
 "$NINJA" -C "$OUT_DIR" -t inputs "$NINJA_TARGET" > "$OUT_DIR/inputs.txt"
 printf '%d input files\n' "$(grep -c . "$OUT_DIR/inputs.txt")"
 
-say "share of the repository"
-# Counted from the committed tree rather than from the index. `git ls-files`
-# answers zero when the checkout was made without one, and this repository is
-# checked out with actions/checkout, which does create an index, but the count
-# has to mean the same thing either way. The tree is the thing being measured.
-TOTAL=$(git ls-tree -r --name-only HEAD | wc -l)
-INPUTS=$(grep -c . "$OUT_DIR/inputs.txt")
+say "which of those the repository actually holds"
+# ninja writes each input as a path relative to the output directory, while the
+# committed tree is named from the repository root, so the two cannot be
+# compared as written. Each input is resolved both ways and kept if either lands
+# on a tracked file: exactly one of the two readings can match, so a file that
+# does match is found whichever form ninja used, and a generated file matches
+# neither and is counted as what it is.
+#
+# Denominator is the committed tree rather than the index. `git ls-files`
+# answers zero for a checkout made with --no-checkout, and a share computed
+# against zero is not a share.
+#
 # Not `in`: that is a gawk keyword, and awk exits before printing anything.
-awk -v inputs="$INPUTS" -v total="$TOTAL" \
+"$PYTHON" - "$REPO_DIR" "$OUT_DIR" > "$OUT_DIR/counts.txt" <<'PYTHON'
+import os
+import subprocess
+import sys
+
+repo_dir, out_dir = os.path.abspath(sys.argv[1]), os.path.abspath(sys.argv[2])
+
+tracked = set(
+    subprocess.run(
+        ["git", "ls-tree", "-r", "--name-only", "HEAD"],
+        cwd=repo_dir,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.splitlines()
+)
+
+with open(os.path.join(out_dir, "inputs.txt"), encoding="utf-8", errors="replace") as handle:
+    inputs = [line for line in handle.read().splitlines() if line]
+
+in_tree, elsewhere = set(), set()
+for path in inputs:
+    # os.path.join returns the second argument outright when it is absolute, so
+    # an input ninja already gave as an absolute path is handled by the same two
+    # readings without a special case.
+    for base in (out_dir, repo_dir):
+        relative = os.path.relpath(os.path.normpath(os.path.join(base, path)), repo_dir)
+        if relative in tracked:
+            in_tree.add(relative)
+            break
+    else:
+        elsewhere.add(path)
+
+for name, paths in (("repo-inputs.txt", in_tree), ("non-repo-inputs.txt", elsewhere)):
+    with open(os.path.join(out_dir, name), "w", encoding="utf-8") as handle:
+        # No trailing newline for an empty set, so that `wc -l` on these files
+        # is the count whether or not there is anything in them.
+        handle.write("".join(path + "\n" for path in sorted(paths)))
+
+print(len(inputs))
+print(len(in_tree))
+print(len(elsewhere))
+print(len(tracked))
+PYTHON
+
+read -r INPUTS IN_TREE ELSEWHERE TOTAL < "$OUT_DIR/counts.txt"
+printf '%d input files\n' "$INPUTS"
+printf '%d of them files in this repository\n' "$IN_TREE"
+printf '%d generated, in the output directory or in the toolchain\n' "$ELSEWHERE"
+awk -v inputs="$IN_TREE" -v total="$TOTAL" \
   'BEGIN { printf "%d of %d tracked files, %.2f%%\n", inputs, total, 100 * inputs / total }'
 
-printf '\nWrote %s/deps.txt and %s/inputs.txt\n' "$OUT_DIR" "$OUT_DIR"
+printf '\nWrote %s/deps.txt, %s/inputs.txt, %s/repo-inputs.txt\n' \
+  "$OUT_DIR" "$OUT_DIR" "$OUT_DIR"

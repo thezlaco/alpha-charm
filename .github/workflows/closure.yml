@@ -30,17 +30,16 @@ jobs:
     # itself is cheap; waiting for its dependencies is not.
     timeout-minutes: 180
 
-    # The checkout is in src, because DEPS resolves its paths against a solution
-    # by that name, so the steps below run there. Steps that name absolute paths
-    # are unaffected; the ones that call ./tools need it.
-    defaults:
-      run:
-        working-directory: src
 
     steps:
       # Disk before the checkout, for the same reason as the build job: the tree
       # is 5.5 GB, and the dependencies gclient fetches on top of that need room
       # too. This job needs far less than a build does, but not none.
+      # This step and everything before it run before src exists, so they take no
+      # working directory of their own. The steps below it, which call ./tools and
+      # ./build, are inside the checkout; declaring src as the job default instead
+      # would apply it here too and the step would fail to start against a
+      # directory that has not been created yet.
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
@@ -83,9 +82,11 @@ jobs:
       # gn needs the tree to be complete before it will read it, and this
       # repository is only the main repository. Nothing is compiled by this.
       - name: Fetch dependencies
+        working-directory: src
         run: ./tools/fetch-deps.sh
 
       - name: Measure closure
+        working-directory: src
         run: ./tools/closure.sh
 
       # The raw lists go out as an artifact and the numbers are printed, so the
@@ -94,10 +95,13 @@ jobs:
       # commits itself would make every run a diff, and the figure belongs to a
       # given revision rather than to the branch.
       - name: Summarise
+        working-directory: src
         run: |
-          printf 'targets reachable: %s\n' "$(wc -l < out/Closure/deps.txt)"
-          printf 'input files:       %s\n' "$(wc -l < out/Closure/inputs.txt)"
-          printf 'tracked files:     %s\n' "$(git ls-tree -r --name-only HEAD | wc -l)"
+          printf 'targets reachable:  %s\n' "$(wc -l < out/Closure/deps.txt)"
+          printf 'build inputs:       %s\n' "$(wc -l < out/Closure/inputs.txt)"
+          printf 'in the repository:  %s\n' "$(wc -l < out/Closure/repo-inputs.txt)"
+          printf 'not in the tree:    %s\n' "$(wc -l < out/Closure/non-repo-inputs.txt)"
+          printf 'tracked files:      %s\n' "$(git ls-tree -r --name-only HEAD | wc -l)"
 
       - uses: actions/upload-artifact@v4
         if: always()
