@@ -30,6 +30,13 @@ jobs:
     # itself is cheap; waiting for its dependencies is not.
     timeout-minutes: 180
 
+    # The checkout is in src, because DEPS resolves its paths against a solution
+    # by that name, so the steps below run there. Steps that name absolute paths
+    # are unaffected; the ones that call ./tools need it.
+    defaults:
+      run:
+        working-directory: src
+
     steps:
       # Disk before the checkout, for the same reason as the build job: the tree
       # is 5.5 GB, and the dependencies gclient fetches on top of that need room
@@ -96,5 +103,5 @@ jobs:
         if: always()
         with:
           name: charm-closure
-          path: out/Closure/*.txt
+          path: src/out/Closure/*.txt
           if-no-files-found: warn

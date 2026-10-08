@@ -34,6 +34,13 @@ jobs:
     # the job fails on disk long before this matters.
     timeout-minutes: 360
 
+    # The checkout is in src, because DEPS resolves its paths against a solution
+    # by that name, so the steps below run there. Steps that name absolute paths
+    # are unaffected; the ones that call ./tools need it.
+    defaults:
+      run:
+        working-directory: src
+
     steps:
       # Recover disk before anything else, including the checkout. This
       # repository is 5.5 GB across 509 570 files, so the checkout itself needs
@@ -92,5 +99,5 @@ jobs:
         if: always()
         with:
           name: charm-apk
-          path: out/**/apks/*.apk
+          path: src/out/**/apks/*.apk
           if-no-files-found: warn
