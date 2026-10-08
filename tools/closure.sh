@@ -54,15 +54,19 @@ cd "$REPO_DIR"
 # which is what happened here, since Chromium's tree carries its own copy of
 # depot_tools at third_party/depot_tools. The binary is the one DEPS puts in
 # buildtools/linux64/gn, guarded by host_os == "linux".
+#
+# Appended rather than prepended, so that whatever is already on PATH cannot
+# shadow the binary. And set before gn is resolved rather than after, because the
+# fallback below is a lookup on PATH, and a lookup made before these two
+# directories were added cannot see them.
+export PATH="$PATH:$REPO_DIR/buildtools/linux64/gn:$REPO_DIR/third_party/ninja"
+[ -n "${CHARM_DEPOT_TOOLS:-}" ] && export PATH="$PATH:$CHARM_DEPOT_TOOLS"
+
 GN="$REPO_DIR/buildtools/linux64/gn/gn"
 [ -x "$GN" ] || GN="$(command -v gn || true)"
 [ -n "$GN" ] && [ -x "$GN" ] ||
-  die "gn not found. Run tools/fetch-deps.sh, which puts it in the tree."
-
-# Appended, so that nothing already on PATH can take precedence over the two
-# directories above and neither can shadow the other.
-export PATH="$PATH:$REPO_DIR/buildtools/linux64/gn:$REPO_DIR/third_party/ninja"
-[ -n "${CHARM_DEPOT_TOOLS:-}" ] && export PATH="$PATH:$CHARM_DEPOT_TOOLS"
+  die "gn not found at $REPO_DIR/buildtools/linux64/gn/gn, nor on PATH." \
+    "Run tools/fetch-deps.sh first."
 
 # The tree's own python, which .gn already names as script_executable. Used
 # rather than the system one so that the counting agrees with gn on what the

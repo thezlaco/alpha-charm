@@ -82,11 +82,37 @@ jobs:
             https://chromium.googlesource.com/chromium/tools/depot_tools.git \
             "$GITHUB_WORKSPACE/depot_tools"
 
+      # gclient fetches several gigabytes and the answer this workflow computes
+      # does not change unless DEPS does. Cached on the hash of DEPS alone, so a
+      # change to the source tree reuses a fetch and a change to a dependency
+      # gets a new one.
+      #
+      # Restored before fetch-deps.sh rather than instead of it. gclient skips
+      # what is already present and repairs what is not, so a stale or partial
+      # cache costs time rather than producing a wrong measurement, which is the
+      # whole point of the job.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            src/third_party
+            src/buildtools
+            src/.cipd
+          key: closure-deps-${{ hashFiles('src/DEPS') }}
+
       # gn needs the tree to be complete before it will read it, and this
       # repository is only the main repository. Nothing is compiled by this.
       - name: Fetch dependencies
         working-directory: src
         run: ./tools/fetch-deps.sh
+
+      # What arrived, and how much of it there is. The step after this one cannot
+      # say which of its inputs were missing, only that one was, and the size
+      # decides whether the cache above can hold a fetch at all.
+      - name: What arrived
+        run: |
+          ls src/buildtools || echo "no buildtools"
+          du -sh src/buildtools src/third_party src/.cipd 2>/dev/null || true
+          df -h /
 
       - name: Measure closure
         working-directory: src
