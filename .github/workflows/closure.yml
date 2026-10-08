@@ -44,8 +44,14 @@ jobs:
       # A shallow clone, stated rather than left to the default: the history of
       # an imported Chromium tree is large and this job measures a checkout, not
       # a commit. persist-credentials is off because nothing here pushes.
+      # Checked out into src rather than into the workspace root, because DEPS
+      # writes every path against a solution named src and gclient resolves a
+      # path against the solution whose name prefixes it. Checkout into the root
+      # and the dependencies land in a sibling src that no BUILD file refers to,
+      # while the hooks look for files inside the checkout and do not find them.
       - uses: actions/checkout@v4
         with:
+          path: src
           fetch-depth: 1
           persist-credentials: false
 

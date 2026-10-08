@@ -22,7 +22,6 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REPO_NAME="$(basename "$REPO_DIR")"
 WORKSPACE_DIR="$(dirname "$REPO_DIR")"
 DEPOT_TOOLS="${CHARM_DEPOT_TOOLS:-$WORKSPACE_DIR/depot_tools}"
 
@@ -38,17 +37,30 @@ fi
   exit 1
 }
 
-# gclient locates a workspace by finding .gclient, and each DEPS path is written
-# relative to the solution root, which gclient calls "src". Naming the solution
-# after the directory it actually occupies keeps those paths landing inside this
-# repository, where the BUILD files expect them, instead of in a sibling named
-# src.
+# The checkout has to be in a directory named src. Every path in DEPS is
+# written against a solution called src, and gclient resolves a DEPS path
+# against the solution whose name prefixes it. A solution named after the
+# repository matches none of those paths, so every dependency lands in a
+# sibling directory called src that no BUILD file refers to, and the hooks fail
+# on a file they expect inside this checkout. It is a naming convention the
+# whole tree depends on rather than a preference.
+[ "$(basename "$REPO_DIR")" = "src" ] || {
+  echo "This checkout is in $(basename "$REPO_DIR"), and it has to be in src." >&2
+  echo "Move it, or clone it into a directory of that name:" >&2
+  echo "  git clone https://github.com/thezlaco/alpha-charm.git /some/where/src" >&2
+  exit 1
+}
+
+# gclient locates a workspace by finding .gclient, which therefore belongs to the
+# directory containing src rather than to src itself. The solution is named src
+# and is left unmanaged, because it is this repository and it is already checked
+# out: gclient is here for the other several hundred of them.
 CLIENT="$WORKSPACE_DIR/.gclient"
 if [ ! -f "$CLIENT" ]; then
   cat > "$CLIENT" <<EOF
 solutions = [
   {
-    "name": "$REPO_NAME",
+    "name": "src",
     "url": "https://github.com/thezlaco/alpha-charm.git",
     "managed": False,
     "deps_file": "DEPS",
@@ -85,4 +97,4 @@ cd "$WORKSPACE_DIR"
 gclient sync --no-history ${CHARM_DEPS_ARGS:-}
 
 echo
-echo "Dependencies fetched into $REPO_NAME/third_party."
+echo "Dependencies fetched into src/third_party."
