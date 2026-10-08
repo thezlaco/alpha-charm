@@ -14,8 +14,12 @@ target_os = "android"
 # arm64 only, and no second ABI. A build-time choice rather than a property of
 # Charm. Turning 32-bit back on costs about another doubling of native build
 # time.
+#
+# There is no argument for the second ABI here. This tree has none, and gn says
+# so: "build_apk_secondary_abi" appeared in no declare_args block, so it was
+# being carried as a build argument that nothing read. target_cpu says the same
+# thing by itself.
 target_cpu = "arm64"
-build_apk_secondary_abi = false
 
 # The target that makes the experimental Desktop Android build, and so the
 # reason there is an extensions system to expose. Stated rather than left to the

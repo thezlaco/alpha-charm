@@ -126,5 +126,9 @@ jobs:
         if: always()
         with:
           name: charm-closure
+          # Every list, not a summary. inputs.txt is the whole thing ninja
+          # produced and inputs-sample.txt the same truncated, and they are what
+          # any later decision about paths has to rest on; reading them is
+          # cheaper than re-running a job that takes an hour to produce them.
           path: src/out/Closure/*.txt
           if-no-files-found: warn

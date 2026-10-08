@@ -106,24 +106,28 @@ NINJA_TARGET="${TARGET#//}"
 printf '%d input files\n' "$(grep -c . "$OUT_DIR/inputs.txt")"
 
 say "which of those the repository actually holds"
-# ninja writes each input as a path relative to the output directory, while the
-# committed tree is named from the repository root, so the two cannot be
-# compared as written. Each input is resolved both ways and kept if either lands
-# on a tracked file: exactly one of the two readings can match, so a file that
-# does match is found whichever form ninja used, and a generated file matches
-# neither and is counted as what it is.
+# Counting and reporting are both done here, rather than counting in python and
+# printing from the shell. The previous version printed four bare numbers and the
+# shell read them back by position, so a change in the order they were printed
+# in silently attributed each figure to the wrong label, and there was nothing
+# to notice that the figures did not add up.
+#
+# The two lists are a partition of the inputs, so they are reported together with
+# the size of the partition they came from. If they do not account for all of it,
+# that is said outright rather than left as two numbers that quietly disagree.
 #
 # Denominator is the committed tree rather than the index. `git ls-files`
-# answers zero for a checkout made with --no-checkout, and a share computed
-# against zero is not a share.
-#
-# Not `in`: that is a gawk keyword, and awk exits before printing anything.
-"$PYTHON" - "$REPO_DIR" "$OUT_DIR" > "$OUT_DIR/counts.txt" <<'PYTHON'
+# answers zero for a checkout made with --no-checkout, and a share against zero
+# is not a share.
+"$PYTHON" - "$REPO_DIR" "$OUT_DIR" <<'PYTHON'
 import os
 import subprocess
 import sys
 
 repo_dir, out_dir = os.path.abspath(sys.argv[1]), os.path.abspath(sys.argv[2])
+
+with open(os.path.join(out_dir, "inputs.txt"), encoding="utf-8", errors="replace") as handle:
+    inputs = [line for line in handle.read().splitlines() if line]
 
 tracked = set(
     subprocess.run(
@@ -135,14 +139,19 @@ tracked = set(
     ).stdout.splitlines()
 )
 
-with open(os.path.join(out_dir, "inputs.txt"), encoding="utf-8", errors="replace") as handle:
-    inputs = [line for line in handle.read().splitlines() if line]
+# The first few, unchanged, because what ninja actually prints is the thing being
+# reasoned about here and it should not have to be guessed at from a count.
+with open(os.path.join(out_dir, "inputs-sample.txt"), "w", encoding="utf-8") as handle:
+    for line in inputs[:20]:
+        handle.write(line + "\n")
 
 in_tree, elsewhere = set(), set()
 for path in inputs:
-    # os.path.join returns the second argument outright when it is absolute, so
-    # an input ninja already gave as an absolute path is handled by the same two
-    # readings without a special case.
+    # os.path.join returns the second argument outright when it is absolute, so an
+    # input ninja already gave as an absolute path is handled by the same two
+    # readings without a special case. Exactly one reading can name a tracked
+    # file, so a file that matches is found whichever form ninja used, and a
+    # generated file matches neither.
     for base in (out_dir, repo_dir):
         relative = os.path.relpath(os.path.normpath(os.path.join(base, path)), repo_dir)
         if relative in tracked:
@@ -153,20 +162,24 @@ for path in inputs:
 
 for name, paths in (("repo-inputs.txt", in_tree), ("non-repo-inputs.txt", elsewhere)):
     with open(os.path.join(out_dir, name), "w", encoding="utf-8") as handle:
-        # No trailing newline for an empty set, so that `wc -l` on these files
-        # is the count whether or not there is anything in them.
+        # No trailing newline for an empty set, so that `wc -l` on these files is
+        # the count whether or not there is anything in them.
         handle.write("".join(path + "\n" for path in sorted(paths)))
 
-print(len(inputs))
-print(len(in_tree))
-print(len(elsewhere))
-print(len(tracked))
-PYTHON
+print("%d build inputs read from ninja" % len(inputs))
+print("%d of them files in this repository" % len(in_tree))
+print("%d of them generated, or in the output directory or the toolchain" % len(elsewhere))
+print("%d distinct inputs, since ninja can print one file twice" % len(set(inputs)))
+print("%d tracked files in the repository" % len(tracked))
 
-read -r INPUTS IN_TREE ELSEWHERE TOTAL < "$OUT_DIR/counts.txt"
-printf '%d input files\n' "$INPUTS"
-printf '%d of them files in this repository\n' "$IN_TREE"
-printf '%d generated, in the output directory or in the toolchain\n' "$ELSEWHERE"
-awk -v inputs="$IN_TREE" -v total="$TOTAL" 'BEGIN { printf "%d of %d tracked files, %.2f%%\n", inputs, total, 100 * inputs / total }'
+accounted = len(in_tree) + len(elsewhere)
+if accounted != len(set(inputs)):
+    print("these do not add up to the inputs: %d against %d" % (accounted, len(set(inputs))))
+
+if tracked:
+    print("%d of %d tracked files, %.2f%%" % (len(in_tree), len(tracked), 100 * len(in_tree) / len(tracked)))
+else:
+    print("no share: the checkout reported no tracked files to compare against")
+PYTHON
 
 printf '\nWrote %s/deps.txt, %s/inputs.txt, %s/repo-inputs.txt\n' "$OUT_DIR" "$OUT_DIR" "$OUT_DIR"
