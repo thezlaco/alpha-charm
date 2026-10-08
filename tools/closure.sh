@@ -65,8 +65,7 @@ export PATH="$PATH:$REPO_DIR/buildtools/linux64/gn:$REPO_DIR/third_party/ninja"
 GN="$REPO_DIR/buildtools/linux64/gn/gn"
 [ -x "$GN" ] || GN="$(command -v gn || true)"
 [ -n "$GN" ] && [ -x "$GN" ] ||
-  die "gn not found at $REPO_DIR/buildtools/linux64/gn/gn, nor on PATH." \
-    "Run tools/fetch-deps.sh first."
+  die "gn not found at $REPO_DIR/buildtools/linux64/gn/gn, nor on PATH. Run tools/fetch-deps.sh first."
 
 # The tree's own python, which .gn already names as script_executable. Used
 # rather than the system one so that the counting agrees with gn on what the
@@ -168,8 +167,6 @@ read -r INPUTS IN_TREE ELSEWHERE TOTAL < "$OUT_DIR/counts.txt"
 printf '%d input files\n' "$INPUTS"
 printf '%d of them files in this repository\n' "$IN_TREE"
 printf '%d generated, in the output directory or in the toolchain\n' "$ELSEWHERE"
-awk -v inputs="$IN_TREE" -v total="$TOTAL" \
-  'BEGIN { printf "%d of %d tracked files, %.2f%%\n", inputs, total, 100 * inputs / total }'
+awk -v inputs="$IN_TREE" -v total="$TOTAL" 'BEGIN { printf "%d of %d tracked files, %.2f%%\n", inputs, total, 100 * inputs / total }'
 
-printf '\nWrote %s/deps.txt, %s/inputs.txt, %s/repo-inputs.txt\n' \
-  "$OUT_DIR" "$OUT_DIR" "$OUT_DIR"
+printf '\nWrote %s/deps.txt, %s/inputs.txt, %s/repo-inputs.txt\n' "$OUT_DIR" "$OUT_DIR" "$OUT_DIR"

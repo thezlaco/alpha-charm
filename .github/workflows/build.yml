@@ -47,9 +47,7 @@ jobs:
       # directory that has not been created yet.
       - name: Free disk space
         run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
-                     /usr/local/lib/android /usr/local/lib/heroku \
-                     /opt/hostedtoolcache "$AGENT_TOOLSDIRECTORY"
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /usr/local/lib/android /usr/local/lib/heroku /opt/hostedtoolcache "$AGENT_TOOLSDIRECTORY"
           df -h /
 
       # A shallow clone, stated rather than left to the default: the history of
@@ -88,9 +86,7 @@ jobs:
       # gn measures.
       - name: Install depot_tools
         run: |
-          git clone --depth=1 \
-            https://chromium.googlesource.com/chromium/tools/depot_tools.git \
-            "$GITHUB_WORKSPACE/depot_tools"
+          git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git "$GITHUB_WORKSPACE/depot_tools"
 
       # The main repository alone is not a buildable tree. This is what puts the
       # NDK, android_deps and the toolchain in place, and it is the step that was
