@@ -30,6 +30,16 @@ jobs:
     # itself is cheap; waiting for its dependencies is not.
     timeout-minutes: 180
 
+    # The depot_tools that gclient itself bootstrapped, passed through the
+    # variable tools/closure.sh already reads. Its `gn` is a wrapper that knows
+    # where every version of this tree puts the binary, which is worth more than
+    # naming a path: the one guessed here, buildtools/linux64/gn/gn, is not
+    # where this checkout put it. The wrapper from Chromium's own bundled copy
+    # under third_party/depot_tools is the one that does not work, and it is no
+    # longer on PATH.
+    env:
+      CHARM_DEPOT_TOOLS: ${{ github.workspace }}/depot_tools
+
 
     steps:
       # Disk before the checkout, for the same reason as the build job: the tree
@@ -78,23 +88,6 @@ jobs:
         run: |
           git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git "$GITHUB_WORKSPACE/depot_tools"
 
-      # gclient fetches several gigabytes and the answer this workflow computes
-      # does not change unless DEPS does. Cached on the hash of DEPS alone, so a
-      # change to the source tree reuses a fetch and a change to a dependency
-      # gets a new one.
-      #
-      # Restored before fetch-deps.sh rather than instead of it. gclient skips
-      # what is already present and repairs what is not, so a stale or partial
-      # cache costs time rather than producing a wrong measurement, which is the
-      # whole point of the job.
-      - uses: actions/cache@v4
-        with:
-          path: |
-            src/third_party
-            src/buildtools
-            src/.cipd
-          key: closure-deps-${{ hashFiles('src/DEPS') }}
-
       # gn needs the tree to be complete before it will read it, and this
       # repository is only the main repository. Nothing is compiled by this.
       - name: Fetch dependencies
@@ -106,7 +99,8 @@ jobs:
       # decides whether the cache above can hold a fetch at all.
       - name: What arrived
         run: |
-          ls src/buildtools || echo "no buildtools"
+          ls src/buildtools/linux64 || echo "no buildtools/linux64"
+          find src/buildtools -maxdepth 3 -name 'gn*'
           du -sh src/buildtools src/third_party src/.cipd 2>/dev/null || true
           df -h /
 
