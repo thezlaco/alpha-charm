@@ -1,0 +1,94 @@
+name: closure
+
+# Measures how much of the tree the Android browser actually needs.
+#
+# Separate from the build workflow so it can be run alone. It is the workflow
+# that gets run often, because every removal decision depends on the number it
+# prints, and starting a six-hour compile alongside it would make the cheap
+# measurement wait on the expensive thing and cost an hour of runner time to
+# learn nothing.
+#
+# Manual. The answer changes only when the tree does, so running it on every push
+# would spend the scarce resource to recompute a number already known.
+#
+# The work itself lives in tools/, so the same commands run unchanged on a build
+# machine over SSH. This workflow only prepares a machine and calls them.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  closure:
+    runs-on: ubuntu-latest
+
+    # Generous, because gclient fetches the NDK and the Android SDK before gn
+    # reads a single BUILD file, and that download is the slow part. The job
+    # itself is cheap; waiting for its dependencies is not.
+    timeout-minutes: 180
+
+    steps:
+      # Disk before the checkout, for the same reason as the build job: the tree
+      # is 5.5 GB, and the dependencies gclient fetches on top of that need room
+      # too. This job needs far less than a build does, but not none.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
+                     /usr/local/lib/android /usr/local/lib/heroku \
+                     /opt/hostedtoolcache "$AGENT_TOOLSDIRECTORY"
+          df -h /
+
+      # A shallow clone, stated rather than left to the default: the history of
+      # an imported Chromium tree is large and this job measures a checkout, not
+      # a commit. persist-credentials is off because nothing here pushes.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      # No install-build-deps.sh here. It installs the compiler and the X11 and
+      # NSS development libraries that compiling needs, which is several GB on a
+      # runner this job just freed disk on, and reading a build graph needs none
+      # of it: gn is a self-contained binary and runs the tree's own hermetic
+      # python. The build workflow installs them for the reason that it
+      # compiles.
+      #
+      # Cloned beside the checkout rather than inside it, because that is where
+      # tools/fetch-deps.sh looks and where a workspace expects it. It is also
+      # where gclient writes .gclient. Named explicitly rather than as the parent
+      # directory, because git clone into an existing non-empty directory is an
+      # error, and the parent is not empty.
+      - name: Install depot_tools
+        run: |
+          git clone --depth=1 \
+            https://chromium.googlesource.com/chromium/tools/depot_tools.git \
+            "$GITHUB_WORKSPACE/../depot_tools"
+
+      # gn needs the tree to be complete before it will read it, and this
+      # repository is only the main repository. Nothing is compiled by this.
+      - name: Fetch dependencies
+        run: ./tools/fetch-deps.sh
+
+      - name: Measure closure
+        run: ./tools/closure.sh
+
+      # The raw lists go out as an artifact and the numbers are printed, so the
+      # next removal decision can be made against this run rather than against
+      # an estimate. Nothing is written back to the tree: a measurement that
+      # commits itself would make every run a diff, and the figure belongs to a
+      # given revision rather than to the branch.
+      - name: Summarise
+        run: |
+          printf 'targets reachable: %s\n' "$(wc -l < out/Closure/deps.txt)"
+          printf 'input files:       %s\n' "$(wc -l < out/Closure/inputs.txt)"
+          printf 'tracked files:     %s\n' "$(git ls-tree -r --name-only HEAD | wc -l)"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: charm-closure
+          path: out/Closure/*.txt
+          if-no-files-found: warn
