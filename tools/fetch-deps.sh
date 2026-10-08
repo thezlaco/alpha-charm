@@ -94,7 +94,20 @@ cd "$WORKSPACE_DIR"
 
 # --no-history because none of these packages' histories are wanted: gclient is
 # here for their contents, and their histories are most of what they cost.
-gclient sync --no-history ${CHARM_DEPS_ARGS:-}
+#
+# --nohooks because the hooks are Chromium's tooling for their own review and
+# build infrastructure: landmines, clobber, tast, reclient, lastchange. They are
+# Python scripts that import each other, and keeping a tree buildable with them
+# means keeping their whole transitive import tail, which is a set nobody wrote
+# down and which grows by import. Charm builds an APK and does not run Chromium's
+# bots, so the scripts are not run.
+#
+# What that costs is knowable rather than guessed. Nothing fetched by a hook is
+# fetched, so if one of them turned out to produce something the build needs, the
+# first gn gen or ninja run will say so, and that hook can be re-enabled on
+# purpose. CHARM_DEPS_ARGS cannot switch them back on, since this flag is
+# unconditional; removing it from here is the way to do that.
+gclient sync --no-history --nohooks ${CHARM_DEPS_ARGS:-}
 
 echo
 echo "Dependencies fetched into src/third_party."
