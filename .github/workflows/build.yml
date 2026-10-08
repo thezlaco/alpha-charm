@@ -1,13 +1,18 @@
 name: build
 
-# Builds Charm and keeps the APK as an artifact.
+# Measures the Android browser's dependency closure, and builds Charm.
 #
-# Deliberately manual. A Chromium build costs hours of runner time and produces
-# nothing new unless the pinned revision, the patch series or the configuration
-# changed, so it runs when asked rather than on every push.
+# Two jobs because they answer different questions and need different resources.
+# `closure` reads the build graph: it runs gn over the tree and compiles
+# nothing, so it finishes in minutes and fits on a free runner. `build` compiles,
+# so it needs a runner large enough to finish.
 #
-# The work itself lives in tools/, so the same two commands run unchanged on a
-# build machine over SSH. This workflow only prepares a machine and calls them.
+# Both are manual. Neither produces anything new unless the pinned revision, the
+# patch series or the configuration changed, and runner minutes are the scarce
+# resource here.
+#
+# The work itself lives in tools/, so the same commands run unchanged on a build
+# machine over SSH. These workflows only prepare a machine and call them.
 
 on:
   workflow_dispatch:
@@ -17,6 +22,62 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # How much of the tree the browser actually needs. This is the number every
+  # removal decision rests on, and it is worth measuring before removing
+  # anything rather than after: a directory being absent from the repository is
+  # not evidence that no target reaches it.
+  closure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      # Disk before the checkout, for the same reason as the build job: the tree
+      # is 5.5 GB, and the dependencies gclient fetches on top of that need room
+      # too. This job needs far less than a build does, but not none.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
+                     /usr/local/lib/android /usr/local/lib/heroku \
+                     /opt/hostedtoolcache "$AGENT_TOOLSDIRECTORY"
+          df -h /
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Install host dependencies
+        run: ./build/install-build-deps.sh --no-prompt android
+
+      - name: Install depot_tools
+        run: git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+
+      # gn needs the tree to be complete before it will read it, and this
+      # repository is only the main repository. Nothing is compiled by this.
+      - name: Fetch dependencies
+        run: ./tools/fetch-deps.sh
+
+      - name: Measure closure
+        run: ./tools/closure.sh
+
+      # The raw lists go out as an artifact and the numbers are printed, so the
+      # next removal decision can be made against this run rather than against
+      # an estimate. Nothing is written back to the tree: a measurement that
+      # commits itself would make every run a diff, and the figure belongs to a
+      # given revision rather than to the branch.
+      - name: Summarise
+        run: |
+          printf 'targets reachable: %s\n' "$(wc -l < out/Closure/deps.txt)"
+          printf 'input files:       %s\n' "$(wc -l < out/Closure/inputs.txt)"
+          printf 'tracked files:     %s\n' "$(git ls-tree -r --name-only HEAD | wc -l)"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: charm-closure
+          path: out/Closure/*.txt
+          if-no-files-found: warn
+
   build:
     # The free runner is 4 vCPU / 16 GB RAM / 14 GB of disk. Chromium does not
     # fit in 14 GB, so on a standard runner this fails at the fetch stage. Move
@@ -60,6 +121,12 @@ jobs:
       # bring it. It carries gn and autoninja, which tools/build.sh needs.
       - name: Install depot_tools
         run: git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+
+      # The main repository alone is not a buildable tree. This is what puts the
+      # NDK, android_deps and the toolchain in place, and it is the step that was
+      # missing, which is why the workflow referenced a tool that never existed.
+      - name: Fetch dependencies
+        run: ./tools/fetch-deps.sh
 
       - name: Build
         run: ./tools/build.sh
