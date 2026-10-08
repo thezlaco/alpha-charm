@@ -43,17 +43,26 @@ cd "$REPO_DIR"
 [ -f .gn ] && [ -f BUILD.gn ] ||
   die "$REPO_DIR does not look like a Chromium checkout."
 
-# gclient puts the toolchain into the tree rather than onto PATH, because a
-# Chromium build must use the clang and ninja of its own pinned revision. gn
-# lands in buildtools/linux64/gn/gn per DEPS, and ninja in
-# third_party/ninja/ninja, so both directories are added rather than assumed.
-[ -n "${CHARM_DEPOT_TOOLS:-}" ] && export PATH="$CHARM_DEPOT_TOOLS:$PATH"
-export PATH="$REPO_DIR/third_party/depot_tools:$PATH"
-export PATH="$REPO_DIR/buildtools/linux64/gn:$PATH"
-export PATH="$REPO_DIR/third_party/ninja:$PATH"
-
-command -v gn >/dev/null 2>&1 ||
+# gn is named outright rather than looked up on PATH, because depot_tools also
+# ships something called gn: a shell wrapper that runs gn.py under depot_tools'
+# own bootstrap python. Any depot_tools directory on PATH ahead of the real
+# binary shadows it with that wrapper, and the wrapper refuses to run in a
+# checkout that has not been bootstrapped:
+#
+#     python3_bin_reldir.txt not found. need to initialize depot_tools
+#
+# which is what happened here, since Chromium's tree carries its own copy of
+# depot_tools at third_party/depot_tools. The binary is the one DEPS puts in
+# buildtools/linux64/gn, guarded by host_os == "linux".
+GN="$REPO_DIR/buildtools/linux64/gn/gn"
+[ -x "$GN" ] || GN="$(command -v gn || true)"
+[ -n "$GN" ] && [ -x "$GN" ] ||
   die "gn not found. Run tools/fetch-deps.sh, which puts it in the tree."
+
+# Appended, so that nothing already on PATH can take precedence over the two
+# directories above and neither can shadow the other.
+export PATH="$PATH:$REPO_DIR/buildtools/linux64/gn:$REPO_DIR/third_party/ninja"
+[ -n "${CHARM_DEPOT_TOOLS:-}" ] && export PATH="$PATH:$CHARM_DEPOT_TOOLS"
 
 # The tree's own python, which .gn already names as script_executable. Used
 # rather than the system one so that the counting agrees with gn on what the
@@ -67,12 +76,12 @@ say "gn gen ${OUT_DIR}"
 # question below about the wrong tree.
 mkdir -p "$OUT_DIR"
 cp config/args.gn "$OUT_DIR/args.gn"
-gn gen "$OUT_DIR"
+"$GN" gen "$OUT_DIR"
 
 say "targets reachable from ${TARGET}"
 # --all walks transitively, which is the whole point: the question is what the
 # browser needs, not what the entry target names directly.
-gn desc "$OUT_DIR" "$TARGET" deps --all > "$OUT_DIR/deps.txt"
+"$GN" desc "$OUT_DIR" "$TARGET" deps --all > "$OUT_DIR/deps.txt"
 printf '%d targets\n' "$(grep -c . "$OUT_DIR/deps.txt")"
 
 say "files the build would read"
