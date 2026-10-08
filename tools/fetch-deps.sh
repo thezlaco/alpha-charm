@@ -59,19 +59,26 @@ EOF
   echo "wrote $CLIENT"
 fi
 
-export PATH="$DEPOT_TOOLS:$PATH"
-cd "$WORKSPACE_DIR"
-
 # Android is a target rather than a default. gclient turns target_os into
 # build/config/gclient_args.gni, and DEPS reads checkout_android from it to
 # decide what to fetch: 73 packages, among them the NDK, the Android SDK and
 # android_deps. Without it gclient syncs happily and leaves a tree that cannot
 # resolve its toolchain, which is a worse failure than not running at all.
 #
-# `gclient config` rather than a line in the file above, because this is what
-# tools/fetch android does, and because it updates an existing .gclient instead
-# of requiring the caller to know whether there was one.
-gclient config --name="$REPO_NAME" --add-target_os=android
+# Top level, because that is where gclient reads it from: it selects the keys
+# of a DEPS file's deps_os and hooks_os dicts, so it describes the workspace
+# rather than any one solution. There is no gclient command that sets it;
+# `gclient config --add-target_os` does not exist, and asking for it stops the
+# run with "no such option".
+if ! grep -q '^target_os' "$CLIENT"; then
+  cat >> "$CLIENT" <<'EOF'
+target_os = [ "android" ]
+EOF
+  echo "added target_os to $CLIENT"
+fi
+
+export PATH="$DEPOT_TOOLS:$PATH"
+cd "$WORKSPACE_DIR"
 
 # --no-history because none of these packages' histories are wanted: gclient is
 # here for their contents, and their histories are most of what they cost.

@@ -35,15 +35,24 @@ is_desktop_android = true
 # Chromium build. None of them ship in the APK.
 #
 # is_component_build compiles the native side in parts rather than as one
-# object, which is the only lever left on how much disk a build needs. Disk is
-# the binding constraint on a build machine rather than a preference, so it is
-# on. The APK is still named ChromePublic and still installs as the same
-# application id; what changes is how the native code reached it.
+# object, and on a Chromium checkout it is the largest single lever on how much
+# disk a build needs. Disk is the binding constraint on a build machine, so it
+# would be on if Android allowed it.
+#
+# It does not. build/config/BUILDCONFIG.gn asserts
+#
+#     assert(!(current_os == "android" && is_component_build),
+#            "Can't use component build on Android")
+#
+# and its own default says the same thing, excluding android from the platforms
+# the flag applies to. So it is off, and the disk argument has to be answered by
+# the symbol settings below rather than by this. Turning it on here would not
+# make a build smaller; it would stop `gn gen` before it read a BUILD file.
 
 is_debug = false
 is_official_build = true
 is_java_debug = false
-is_component_build = true
+is_component_build = false
 dcheck_always_on = false
 android_static_analysis = "off"
 
