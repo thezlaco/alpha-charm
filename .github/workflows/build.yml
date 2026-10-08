@@ -28,7 +28,11 @@ jobs:
   # not evidence that no target reaches it.
   closure:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+
+    # Generous, because gclient fetches the NDK and the Android SDK before gn
+    # reads a single BUILD file, and that download is the slow part. The job
+    # itself is cheap; waiting for its dependencies is not.
+    timeout-minutes: 180
 
     steps:
       # Disk before the checkout, for the same reason as the build job: the tree
@@ -46,11 +50,21 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Install host dependencies
-        run: ./build/install-build-deps.sh --no-prompt android
-
+      # No install-build-deps.sh here. It installs the compiler and the X11 and
+      # NSS development libraries that compiling needs, which is several GB on a
+      # runner this job just freed disk on, and reading a build graph needs none
+      # of it: gn is a self-contained binary and runs the tree's own hermetic
+      # python. The build job below installs them for the reason that it
+      # compiles.
+      #
+      # Cloned beside the checkout rather than inside it, because that is where
+      # tools/fetch-deps.sh looks and where a workspace expects it. It is also
+      # where gclient writes .gclient.
       - name: Install depot_tools
-        run: git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+        run: |
+          git clone --depth=1 \
+            https://chromium.googlesource.com/chromium/tools/depot_tools.git \
+            "$GITHUB_WORKSPACE/.."
 
       # gn needs the tree to be complete before it will read it, and this
       # repository is only the main repository. Nothing is compiled by this.
@@ -110,17 +124,24 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      # Host dependencies are not installed here on purpose. Chromium ships
+      # Host dependencies are not listed here by hand. Chromium ships
       # install-build-deps.sh, which knows the package list for the host it runs
       # on. A hand-written list in a workflow goes stale the moment a
       # distribution renames a package, and did.
+      #
+      # No platform argument: the script takes flags, not targets. Passing
+      # `android` to it was accepted by an older version and is rejected by this
+      # one, which is what stopped this job before it reached the checkout.
       - name: Install host dependencies
-        run: ./build/install-build-deps.sh --no-prompt android
+        run: ./build/install-build-deps.sh --no-prompt
 
-      # depot_tools is not a host package, so install-build-deps.sh does not
-      # bring it. It carries gn and autoninja, which tools/build.sh needs.
+      # Beside the checkout, which is where tools/fetch-deps.sh and
+      # tools/build.sh both look for it.
       - name: Install depot_tools
-        run: git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+        run: |
+          git clone --depth=1 \
+            https://chromium.googlesource.com/chromium/tools/depot_tools.git \
+            "$GITHUB_WORKSPACE/.."
 
       # The main repository alone is not a buildable tree. This is what puts the
       # NDK, android_deps and the toolchain in place, and it is the step that was
