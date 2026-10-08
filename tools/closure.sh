@@ -105,6 +105,23 @@ NINJA_TARGET="${TARGET#//}"
 "$NINJA" -C "$OUT_DIR" -t inputs "$NINJA_TARGET" > "$OUT_DIR/inputs.txt"
 printf '%d input files\n' "$(grep -c . "$OUT_DIR/inputs.txt")"
 
+say "how the graph records the files gn read"
+# ninja -t inputs answers for the build's inputs and says nothing about the
+# files the build system itself read: gn loaded 4829 BUILD and .gni files to
+# produce this graph, and `build/config/BUILDCONFIG.gn` is among them, so a
+# closure made only of build inputs would call it unused.
+#
+# A build graph has to record that it depends on them, since a graph that did
+# not would be stale the moment a BUILD file changed. That edge is where the
+# list would be, so it is looked for rather than reconstructed by hand, and if
+# none of these finds it, the graph is uploaded to be read directly instead.
+for candidate in gn gen build.ninja; do
+  found=$("$NINJA" -C "$OUT_DIR" -t inputs "$candidate" 2>/dev/null | grep -c . || true)
+  printf '%s: %s inputs\n' "$candidate" "${found:-0}"
+done
+grep -n -A 4 '^rule gn' "$OUT_DIR/build.ninja" 2>/dev/null | head -20 ||
+  echo "no gn rule in build.ninja"
+
 say "which of those the repository actually holds"
 # Counting and reporting are both done here, rather than counting in python and
 # printing from the shell. The previous version printed four bare numbers and the

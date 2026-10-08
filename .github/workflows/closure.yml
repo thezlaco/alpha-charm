@@ -130,5 +130,13 @@ jobs:
           # produced and inputs-sample.txt the same truncated, and they are what
           # any later decision about paths has to rest on; reading them is
           # cheaper than re-running a job that takes an hour to produce them.
-          path: src/out/Closure/*.txt
+          #
+          # The generated ninja files come too. They record which BUILD files
+          # gn read to produce the graph, which no measurement taken so far has
+          # accounted for, and reading a copy of that is what settles how to get
+          # at it instead of reconstructing it by hand.
+          path: |
+            src/out/Closure/*.txt
+            src/out/Closure/build.ninja
+            src/out/Closure/toolchain.ninja
           if-no-files-found: warn
