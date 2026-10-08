@@ -109,5 +109,34 @@ cd "$WORKSPACE_DIR"
 # unconditional; removing it from here is the way to do that.
 gclient sync --no-history --nohooks ${CHARM_DEPS_ARGS:-}
 
+# The revision this build is, written from Charm's own history.
+#
+# Chromium produces it from a gclient hook, and with hooks off nothing produces
+# it: gn runs build/compute_build_timestamp.py, which opens
+# build/util/LASTCHANGE.committime with no default and no way to skip it, and
+# //build/util/BUILD.gn needs LASTCHANGE as a source to put a build hash in the
+# user agent. Both are part of what the browser reports, so the file has to exist
+# and has to be real rather than a placeholder.
+#
+# The format is what build/util/version.py and compute_build_timestamp.py read:
+# LASTCHANGE=<revision>, LASTCHANGE_YEAR=<year of that commit>, and the commit's
+# unix time beside it in a .committime file.
+#
+# lastchange.py writes <hash>-<position>, where the position comes from a
+# Cr-Commit-Position line that only Google's own commits carry. A commit without
+# one gets the bare hash, which is what is written here, and version.py then
+# chops at the first dash. With no dash that keeps 39 of the 40 characters,
+# which is the same result every non-Google Chromium build gets, and inventing a
+# second field to pad it would be inventing a format this tree does not use.
+LASTCHANGE="$REPO_DIR/build/util/LASTCHANGE"
+mkdir -p "$(dirname "$LASTCHANGE")"
+# The year is asked of git rather than of date, because reading an epoch with
+# date is spelled -d on GNU and -r on BSD, and this has to work on both.
+{
+  printf 'LASTCHANGE=%s\n' "$(git -C "$REPO_DIR" rev-parse HEAD)"
+  printf 'LASTCHANGE_YEAR=%s\n' "$(git -C "$REPO_DIR" log -1 --date=format:%Y --format=%ad)"
+} > "$LASTCHANGE"
+git -C "$REPO_DIR" log -1 --format=%ct | tr -d '\n' > "$LASTCHANGE.committime"
+
 echo
 echo "Dependencies fetched into src/third_party."

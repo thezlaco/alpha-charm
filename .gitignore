@@ -353,3 +353,7 @@ third_party/rust/target/
 
 # Trace files created when using --trace-startup.
 **/chrometrace.log
+
+# Written by tools/fetch-deps.sh from Charm's own history.
+build/util/LASTCHANGE
+build/util/LASTCHANGE.committime
