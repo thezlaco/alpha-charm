@@ -105,22 +105,19 @@ NINJA_TARGET="${TARGET#//}"
 "$NINJA" -C "$OUT_DIR" -t inputs "$NINJA_TARGET" > "$OUT_DIR/inputs.txt"
 printf '%d input files\n' "$(grep -c . "$OUT_DIR/inputs.txt")"
 
-say "how the graph records the files gn read"
-# ninja -t inputs answers for the build's inputs and says nothing about the
-# files the build system itself read: gn loaded 4829 BUILD and .gni files to
-# produce this graph, and `build/config/BUILDCONFIG.gn` is among them, so a
-# closure made only of build inputs would call it unused.
+say "the files gn read"
+# The gn edge in build.ninja declares depfile = build.ninja.d and no inputs,
+# because its inputs cannot be enumerated from the graph: 143002 lines of
+# build.ninja mention no BUILD file at all. ninja takes them from the depfile
+# gn writes while regenerating, and that edge has never run, because running it
+# is part of building and nothing has been built.
 #
-# A build graph has to record that it depends on them, since a graph that did
-# not would be stale the moment a BUILD file changed. That edge is where the
-# list would be, so it is looked for rather than reconstructed by hand, and if
-# none of these finds it, the graph is uploaded to be read directly instead.
-for candidate in gn gen build.ninja; do
-  found=$("$NINJA" -C "$OUT_DIR" -t inputs "$candidate" 2>/dev/null | grep -c . || true)
-  printf '%s: %s inputs\n' "$candidate" "${found:-0}"
-done
-grep -n -A 4 '^rule gn' "$OUT_DIR/build.ninja" 2>/dev/null | head -20 ||
-  echo "no gn rule in build.ninja"
+# So it is run. It is a gn gen and compiles nothing, and what it leaves behind is
+# a list written by gn about what gn loaded, which is the difference between
+# asking the build system and reconstructing its load order by hand.
+"$NINJA" -C "$OUT_DIR" build.ninja.stamp
+[ -f "$OUT_DIR/build.ninja.d" ] ||
+  die "the gn edge ran but left no build.ninja.d, so the files it read are still unknown."
 
 say "which of those the repository actually holds"
 # Counting and reporting are both done here, rather than counting in python and
@@ -146,6 +143,16 @@ repo_dir, out_dir = os.path.abspath(sys.argv[1]), os.path.abspath(sys.argv[2])
 with open(os.path.join(out_dir, "inputs.txt"), encoding="utf-8", errors="replace") as handle:
     inputs = [line for line in handle.read().splitlines() if line]
 
+# The depfile is makefile form: a target, a colon, then the dependencies, with
+# backslash continuations. Everything before the first colon is the target and
+# is not itself a dependency of anything.
+with open(os.path.join(out_dir, "build.ninja.d"), encoding="utf-8", errors="replace") as handle:
+    _, _, declared = handle.read().partition(":")
+gn_read = [token for token in declared.replace("\\\n", " ").split() if token]
+
+with open(os.path.join(out_dir, "deps.txt"), encoding="utf-8", errors="replace") as handle:
+    labels = [line for line in handle.read().splitlines() if line]
+
 tracked = set(
     subprocess.run(
         ["git", "ls-tree", "-r", "--name-only", "HEAD"],
@@ -162,22 +169,50 @@ with open(os.path.join(out_dir, "inputs-sample.txt"), "w", encoding="utf-8") as 
     for line in inputs[:20]:
         handle.write(line + "\n")
 
-in_tree, elsewhere = set(), set()
-for path in inputs:
-    # os.path.join returns the second argument outright when it is absolute, so an
-    # input ninja already gave as an absolute path is handled by the same two
-    # readings without a special case. Exactly one reading can name a tracked
-    # file, so a file that matches is found whichever form ninja used, and a
-    # generated file matches neither.
+def resolve(path):
+    """The tracked file a build input names, or None.
+
+    os.path.join returns the second argument outright when it is absolute, so an
+    input given as an absolute path is handled by the same two readings without a
+    special case. Exactly one reading can name a tracked file, so a file that
+    matches is found whichever form the tool used, and a generated file matches
+    neither.
+    """
     for base in (out_dir, repo_dir):
         relative = os.path.relpath(os.path.normpath(os.path.join(base, path)), repo_dir)
         if relative in tracked:
-            in_tree.add(relative)
-            break
+            return relative
+    return None
+
+
+# Collected in one pass, because the two sets hold different things: in_tree
+# holds repository-relative paths and elsewhere holds the paths as the tool
+# printed them, and subtracting one from the other would compare two spellings.
+in_tree, elsewhere = set(), set()
+for path in inputs:
+    found = resolve(path)
+    if found:
+        in_tree.add(found)
     else:
         elsewhere.add(path)
 
-for name, paths in (("repo-inputs.txt", in_tree), ("non-repo-inputs.txt", elsewhere)):
+# What gn read is a second set with nothing in common with the first: these are
+# the files the build system loaded to produce the graph, and the build has no
+# inputs from them, which is why the first set alone would call them unused.
+gn_in_tree = set()
+for path in gn_read:
+    found = resolve(path)
+    if found:
+        gn_in_tree.add(found)
+
+closure = in_tree | gn_in_tree
+
+for name, paths in (
+    ("repo-inputs.txt", in_tree),
+    ("gn-read.txt", gn_in_tree),
+    ("closure.txt", closure),
+    ("non-repo-inputs.txt", elsewhere),
+):
     with open(os.path.join(out_dir, name), "w", encoding="utf-8") as handle:
         # No trailing newline for an empty set, so that `wc -l` on these files is
         # the count whether or not there is anything in them.
@@ -187,14 +222,28 @@ print("%d build inputs read from ninja" % len(inputs))
 print("%d of them files in this repository" % len(in_tree))
 print("%d of them generated, or in the output directory or the toolchain" % len(elsewhere))
 print("%d distinct inputs, since ninja can print one file twice" % len(set(inputs)))
-print("%d tracked files in the repository" % len(tracked))
+print("%d files gn read, of which %d are in this repository" % (len(gn_read), len(gn_in_tree)))
+print("%d files in the closure of both, and %d tracked files in total" % (len(closure), len(tracked)))
 
 accounted = len(in_tree) + len(elsewhere)
 if accounted != len(set(inputs)):
     print("these do not add up to the inputs: %d against %d" % (accounted, len(set(inputs))))
 
+# Every target that was reached needs a BUILD file for gn to have loaded it. If
+# one is missing, the list of files gn read is incomplete, and a closure built on
+# it would delete a BUILD file that the graph needs.
+# The labels carry a leading // and the paths the tools printed do not, so it is
+# stripped here rather than in the comparison, which would otherwise report every
+# BUILD file as missing.
+wanted = {label[2:].split(":", 1)[0] + "/BUILD.gn" for label in labels if label.startswith("//") and ":" in label}
+absent = sorted(wanted - gn_in_tree)
+print("%d targets reached, needing %d BUILD files, %d of them absent from the list gn read"
+      % (len(labels), len(wanted), len(absent)))
+for name in absent[:10]:
+    print("    absent: %s" % name)
+
 if tracked:
-    print("%d of %d tracked files, %.2f%%" % (len(in_tree), len(tracked), 100 * len(in_tree) / len(tracked)))
+    print("%d of %d tracked files, %.2f%%" % (len(closure), len(tracked), 100 * len(closure) / len(tracked)))
 else:
     print("no share: the checkout reported no tracked files to compare against")
 PYTHON
