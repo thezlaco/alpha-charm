@@ -107,8 +107,6 @@ def main():
     # next to it. Read it, to get a deterministic time close to "now".
     # That date is then modified as described at the top of the file so that
     # it changes less frequently than with every commit.
-    # This intentionally always uses build/util/LASTCHANGE's commit time even if
-    # use_dummy_lastchange is set.
     lastchange_file = os.path.join(THIS_DIR, 'util', 'LASTCHANGE.committime')
     last_commit_timestamp = int(open(lastchange_file).read())
     build_date = datetime.datetime.fromtimestamp(

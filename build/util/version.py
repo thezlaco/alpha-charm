@@ -55,13 +55,23 @@ def FetchValues(file_list, is_official_build=None):
     for file_name in file_list:
         FetchValuesFromFile(values, file_name)
 
-    script_dirname = os.path.dirname(os.path.realpath(__file__))
-    if official_build == '1':
-        lastchange_filename = os.path.join(script_dirname, "LASTCHANGE")
-    else:
-        lastchange_filename = os.path.join(script_dirname, "LASTCHANGE.dummy")
+    # One revision, one file, no build type in the name of it.
+    #
+    # Chromium chooses between LASTCHANGE and LASTCHANGE.dummy here, because an
+    # unofficial build is meant to produce the same binary from any checkout, so
+    # it substitutes a fixed revision instead of the real one. That is why the
+    # tree carries a file of zeros and a gclient hook to keep it: the dummy is an
+    # input to Chromium's scheme, not a fact about any build.
+    #
+    # Charm has one build and one revision, and tools/fetch-deps.sh writes the
+    # real one, so every call site gets the revision of the commit it was built
+    # from. OFFICIAL_BUILD above is still what decides how the build is described
+    # elsewhere; it no longer decides whether the revision is real.
     lastchange_values = {}
-    FetchValuesFromFile(lastchange_values, lastchange_filename)
+    FetchValuesFromFile(
+        lastchange_values,
+        os.path.join(os.path.dirname(os.path.realpath(__file__)), "LASTCHANGE"),
+    )
 
     for placeholder_key, placeholder_value in values.items():
         values[placeholder_key] = SubstTemplate(
