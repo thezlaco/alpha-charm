@@ -153,9 +153,15 @@ gn_read = [token for token in declared.replace("\\\n", " ").split() if token]
 with open(os.path.join(out_dir, "deps.txt"), encoding="utf-8", errors="replace") as handle:
     labels = [line for line in handle.read().splitlines() if line]
 
+# quotePath is off because git otherwise writes any path with a non-ASCII byte in
+# it as a quoted octal escape. Such a path then matches nothing the build tools
+# print, and both this count and the decision to delete a file would be made
+# about a spelling of its name rather than the name. Four paths in this tree are
+# affected, which is few enough to be ignorable for a count and not ignorable for
+# a deletion.
 tracked = set(
     subprocess.run(
-        ["git", "ls-tree", "-r", "--name-only", "HEAD"],
+        ["git", "-c", "core.quotePath=false", "ls-tree", "-r", "--name-only", "HEAD"],
         cwd=repo_dir,
         capture_output=True,
         text=True,
@@ -236,9 +242,17 @@ if accounted != len(set(inputs)):
 # stripped here rather than in the comparison, which would otherwise report every
 # BUILD file as missing.
 wanted = {label[2:].split(":", 1)[0] + "/BUILD.gn" for label in labels if label.startswith("//") and ":" in label}
+
+# Only the ones this repository holds. A BUILD file that gclient fetched through
+# DEPS is read by gn and cannot be a tracked file, so asking whether it is in the
+# tracked tree asks the wrong question: all 564 such paths are absent from the
+# tracked tree and from the closure, and counting them as missing would have
+# turned this check into a permanent, meaningless failure.
+wanted &= tracked
 absent = sorted(wanted - gn_in_tree)
-print("%d targets reached, needing %d BUILD files, %d of them absent from the list gn read"
-      % (len(labels), len(wanted), len(absent)))
+print("%d targets reached, needing %d BUILD files" % (len(labels), len(wanted)))
+print("%d of those absent from the list gn read, which would mean the list is short"
+      % len(absent))
 for name in absent[:10]:
     print("    absent: %s" % name)
 
