@@ -78,9 +78,6 @@ class BottomSheetControllerImpl implements ManagedBottomSheetController {
      */
     private final BackPressHandler mBackPressHandler;
 
-    /** Whether or not always use the full width of the container. */
-    private final boolean mAlwaysFullWidth;
-
     private final Supplier<Integer> mEdgeToEdgeBottomInsetSupplier;
     private final KeyboardVisibilityDelegate mKeyboardVisibilityDelegate;
     private final @Nullable DesktopWindowStateManager mDesktopWindowStateManager;
@@ -134,7 +131,6 @@ class BottomSheetControllerImpl implements ManagedBottomSheetController {
      * @param window A means of accessing the screen size.
      * @param keyboardDelegate A means of hiding the keyboard.
      * @param root The view that should contain the sheet.
-     * @param alwaysFullWidth Whether bottom sheet is full-width.
      * @param edgeToEdgeBottomInsetSupplier The supplier of bottom inset when e2e is on.
      * @param desktopWindowStateManager The {@link DesktopWindowStateManager} for the app header.
      * @param insetObserver The {@link InsetObserver} for inset changes.
@@ -146,7 +142,6 @@ class BottomSheetControllerImpl implements ManagedBottomSheetController {
             Window window,
             KeyboardVisibilityDelegate keyboardDelegate,
             Supplier<ViewGroup> root,
-            boolean alwaysFullWidth,
             Supplier<Integer> edgeToEdgeBottomInsetSupplier,
             @Nullable DesktopWindowStateManager desktopWindowStateManager,
             InsetObserver insetObserver,
@@ -154,7 +149,6 @@ class BottomSheetControllerImpl implements ManagedBottomSheetController {
         mScrimManagerSupplier = scrimManagerSupplier;
         mPendingSheetObservers = new ArrayList<>();
         mSuppressionTokens = new TokenHolder(this::onSuppressionTokensChanged);
-        mAlwaysFullWidth = alwaysFullWidth;
         mEdgeToEdgeBottomInsetSupplier = edgeToEdgeBottomInsetSupplier;
         mKeyboardVisibilityDelegate = keyboardDelegate;
         mDesktopWindowStateManager = desktopWindowStateManager;
@@ -242,7 +236,6 @@ class BottomSheetControllerImpl implements ManagedBottomSheetController {
         mBottomSheet.init(
                 window,
                 keyboardDelegate,
-                mAlwaysFullWidth,
                 mEdgeToEdgeBottomInsetSupplier,
                 mAppHeaderHeight,
                 mBottomControlsOffset,

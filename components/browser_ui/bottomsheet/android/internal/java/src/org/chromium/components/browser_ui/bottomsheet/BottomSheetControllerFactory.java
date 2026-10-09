@@ -21,7 +21,6 @@ public class BottomSheetControllerFactory {
                 params.getWindow(),
                 params.getKeyboardDelegate(),
                 params.getRoot(),
-                /* alwaysFullWidth= */ false,
                 params.getEdgeToEdgeBottomInsetSupplier(),
                 params.getDesktopWindowStateManager(),
                 params.getInsetObserver(),

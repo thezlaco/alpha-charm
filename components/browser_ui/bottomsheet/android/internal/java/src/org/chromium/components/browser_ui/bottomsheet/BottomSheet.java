@@ -157,10 +157,7 @@ class BottomSheet extends BottomSheetView
     /** The gap between the sheet and the edge of the window for large form factor devices. */
     private final @Px int mLargeFormFactorEdgeGap;
 
-    /** The container width threshold below which narrow sheet layout is used. */
-    private final @Px int mNarrowWidthThreshold;
-
-    /** The sheet width when using narrow layout. */
+    /** The widest the sheet is allowed to get before it is pulled in from the edges. */
     private final @Px int mNarrowWidth;
 
     /** The default peek height of the sheet. */
@@ -277,9 +274,6 @@ class BottomSheet extends BottomSheetView
     /** The ratio in the range [0, 1] that the browser controls are hidden. */
     private float mBrowserControlsHiddenRatio;
 
-    /** Whether or not always use the full width of the container. */
-    private boolean mAlwaysFullWidth;
-
     /** Whether the device is on a platform that supports a large form factor. */
     private boolean mIsLargeFormFactor;
 
@@ -337,8 +331,6 @@ class BottomSheet extends BottomSheetView
                 res.getDimensionPixelSize(R.dimen.bottom_sheet_large_form_factor_width);
         mLargeFormFactorEdgeGap =
                 res.getDimensionPixelSize(R.dimen.bottom_sheet_large_form_factor_edge_gap);
-        mNarrowWidthThreshold =
-                res.getDimensionPixelSize(R.dimen.bottom_sheet_narrow_width_threshold);
         mNarrowWidth = res.getDimensionPixelSize(R.dimen.bottom_sheet_narrow_width);
         mDefaultPeekHeight = res.getDimensionPixelSize(R.dimen.bottom_sheet_peek_height);
         mShadowLength = res.getDimensionPixelSize(R.dimen.bottom_sheet_shadow_length);
@@ -451,7 +443,6 @@ class BottomSheet extends BottomSheetView
      *
      * @param window Android window for getting insets.
      * @param keyboardDelegate Delegate for hiding the keyboard.
-     * @param alwaysFullWidth Whether bottom sheet is always full-width.
      * @param edgeToEdgeBottomInsetSupplier The supplier of the bottom inset in DP when e2e is on.
      * @param appHeaderHeight The app header height, in px.
      * @param bottomMargin The extra margin to add to the bottom of sheet container.
@@ -461,7 +452,6 @@ class BottomSheet extends BottomSheetView
     public void init(
             Window window,
             KeyboardVisibilityDelegate keyboardDelegate,
-            boolean alwaysFullWidth,
             Supplier<Integer> edgeToEdgeBottomInsetSupplier,
             int appHeaderHeight,
             int bottomMargin,
@@ -501,7 +491,6 @@ class BottomSheet extends BottomSheetView
 
         mContainerWidth = mSheetContainer.getWidth();
         mContainerHeight = mSheetContainer.getHeight();
-        mAlwaysFullWidth = alwaysFullWidth;
         mIsLargeFormFactor = isLargeFormFactor;
 
         sizeAndPositionSheetInParent();
@@ -929,15 +918,6 @@ class BottomSheet extends BottomSheetView
 
         // We only care about peek/half state.
         int state = getSheetState();
-
-        // Returns non-zero offset for the opening animation. This keeps the animation running
-        // below the bottom of the screen.
-        if (mAlwaysFullWidth
-                && state == SheetState.SCROLLING
-                && mTargetState == SheetState.PEEK
-                && mBrowserControlsHiddenRatio == MAX_HEIGHT_RATIO) {
-            state = mTargetState;
-        }
         if (state != SheetState.PEEK && state != SheetState.HALF) return 0;
         return getSheetHeightForState(state) * mBrowserControlsHiddenRatio;
     }
@@ -1588,23 +1568,28 @@ class BottomSheet extends BottomSheetView
     }
 
     /**
-     * @return The maximum width of the bottom sheet based on its current state and container.
+     * The sheet fills its container, up to the width that still reads well, and is centred in
+     * whatever is left over.
+ *
+     * <p>A phone is narrower than that width, so there the sheet is simply the full width of the
+     * screen. A window on a desktop is much wider, and a sheet stretched across all of it reads as
+     * a slab rather than a panel, so there it is capped and pulled in from the edges.
+ *
+     * <p>The test is the container's width against the cap, not the container's width against a
+     * separate threshold. A threshold needs a second number that has to agree with the first, and
+     * when the two disagree the result is a sheet that gets narrower as the window gets wider, with
+     * a step at the boundary where it stops filling the screen at all.
+     *
+     * <p>The large form factor layout has its own, narrower measure, since it was drawn for that.
      */
     public int getMaxSheetWidth() {
-        if (!mAlwaysFullWidth) {
-            if (isLargeFormFactorUiEnabled()) {
-                int width = mLargeFormFactorWidth;
-                // Clamp the sheet's width to ensure a dedicated 16dp horizontal gap from the edge
-                // of the window when it becomes constrained.
-                int edgeGap = mLargeFormFactorEdgeGap;
-                return Math.max(0, Math.min(width, mContainerWidth - 2 * edgeGap));
-            }
-            int narrowWidthThreshold = mNarrowWidthThreshold;
-            if (mContainerWidth > narrowWidthThreshold) {
-                return mNarrowWidth;
-            }
+        if (isLargeFormFactorUiEnabled()) {
+            // Clamp the sheet's width to ensure a dedicated gap from the edge of the window when
+            // it becomes constrained.
+            int edgeGap = mLargeFormFactorEdgeGap;
+            return Math.max(0, Math.min(mLargeFormFactorWidth, mContainerWidth - 2 * edgeGap));
         }
-        return mContainerWidth;
+        return Math.min(mContainerWidth, mNarrowWidth);
     }
 
     /**
