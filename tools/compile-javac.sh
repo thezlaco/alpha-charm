@@ -81,13 +81,21 @@ say "the target exists"
   die "gn does not know $TARGET, so there is nothing to compile."
 
 say "compile ${TARGET}"
-# Not -k. The point of running this is the first error: a hundred errors that
-# all follow from one missing override is one problem wearing a hundred hats, and
-# stopping at the first is what makes the report readable.
+# -k 0, so that one run reports every failure rather than the first. The
+# opposite was correct once, when the tree was believed sound and a hundred
+# errors were assumed to be one mistake wearing a hundred hats: then the first
+# was all there was to read. It is wrong now, because the tree had files taken
+# out of it, and one absent file fails an edge while every edge that would have
+# reached it is never attempted. Stopping at the first turns one run into one
+# finding; keeping going turns it into the whole list, which is the difference
+# between repairing the tree in a few passes and in a few hundred.
+#
+# The status is left to matter. ninja still exits nonzero when any edge failed,
+# which is what should fail this workflow: a Java error is a mistake to be fixed
+# before it lands, not a number for a human to interpret.
 #
 # Not a dry run either. `ninja -n` would enumerate the same edges and prove
 # nothing about Java, which is the whole reason this script exists.
-"$NINJA" -C "$OUT_DIR" "$TARGET"
+"$NINJA" -C "$OUT_DIR" -k 0 "$TARGET"
 
 say "the Java half compiles"
-printf 'No Java errors were reported.\n'

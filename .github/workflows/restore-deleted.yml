@@ -1,0 +1,123 @@
+name: restore-deleted
+
+# Puts back files that an earlier removal took with it, and that the build
+# reaches in a way the build graph cannot show.
+#
+# The removal was measured against the build graph. gn lists sources, ninja
+# lists inputs, and everything reached that way is what the tree was judged to
+# need. Three kinds of file are reached without being declared, so the graph
+# was silent about all three:
+#
+#   a header, which arrives through a #include that the preprocessor resolves
+#   a script, which arrives as a word in the command line of a build action
+#   a directory, which arrives because an action reads whatever is inside
+#
+# The first kind was 61867 files, the second removed build/toolchain/gcc_link_wrapper.py
+# along with 450 other build scripts, and the third removes policy template
+# directories that expand_directory enumerates. Each was found by the compiler
+# or by gn, one at a time, which is the slowest way there is to find a large set.
+#
+# So a tree is handed in, and everything the removal took from it goes back.
+# Restoring more than is needed costs a file per file; restoring less costs the
+# build. Once the tree compiles, the surplus is removed against the depfiles a
+# successful compile writes, which name exactly the headers used.
+#
+# Nothing is rewritten. Files are added, so every commit already on the branch
+# keeps its place.
+#
+# Usage: workflow_dispatch, with path_prefix set to a directory such as build/
+#        or a single file. An empty prefix restores every path given in paths.
+
+on:
+  workflow_dispatch:
+    inputs:
+      path_prefix:
+        description: 'Directory prefix to restore, e.g. build/. Empty means use paths.'
+        required: false
+        default: ''
+      paths:
+        description: 'One path per line, used when path_prefix is empty.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out with history
+        uses: actions/checkout@v4
+        with:
+          # The commits below are ancestors of HEAD. Without the history there
+          # is nothing to restore from.
+          fetch-depth: 0
+
+      - name: Decide what to restore
+        env:
+          PREFIX: ${{ inputs.path_prefix }}
+          PATHS: ${{ inputs.paths }}
+        run: |
+          set -euo pipefail
+          : > /tmp/targets.txt
+          if [ -n "$PREFIX" ]; then
+            for commit in e768fad95 efd7d0892 81dcb6f7d; do
+              git show --name-only --format="" "$commit" | grep "^$PREFIX" || true
+            done | sort -u > /tmp/targets.txt
+          else
+            printf '%s\n' "$PATHS" | sed '/^$/d' | sort -u > /tmp/targets.txt
+          fi
+          echo "targets: $(wc -l < /tmp/targets.txt)"
+
+      - name: Restore
+        run: |
+          set -euo pipefail
+          n=$(wc -l < /tmp/targets.txt)
+          [ "$n" -gt 0 ] || { echo "nothing to restore"; exit 0; }
+
+          # Restored from the parent of the commit that deleted each one, so a
+          # change Charm made to a file survives the round trip. A file deleted
+          # by more than one of those commits is taken from the first, which is
+          # the state closest to when it existed.
+          declared=0
+          while read -r path; do
+            [ -n "$path" ] || continue
+            for commit in e768fad95 efd7d0892 81dcb6f7d; do
+              if git cat-file -e "$commit^:$path" 2>/dev/null; then
+                mkdir -p "$(dirname "$path")"
+                git show "$commit^:$path" > "$path"
+                declared=$((declared + 1))
+                break
+              fi
+            done
+          done < /tmp/targets.txt
+          echo "restored $declared of $n"
+
+      - name: Push
+        run: |
+          set -euo pipefail
+          git add -A
+          if git diff --cached --quiet; then
+            echo "nothing changed, every target was already present"
+            exit 0
+          fi
+          git -c user.name=github-actions -c user.email=actions@users.noreply.github.com \
+            commit -F - <<'MESSAGE'
+          Put back files the build reaches without declaring them
+
+          The removal was decided against the build graph, and the build graph
+          does not contain everything a build needs. gn lists sources and ninja
+          lists inputs; a header arrives through a #include, a script through a
+          command line, a directory through whatever an action reads inside it.
+          None of those is an edge, so none of them could be seen.
+
+          Everything the removal took from the given prefix goes back, restored
+          from the parent of the commit that deleted it. Nothing is rewritten and
+          no earlier commit is touched, so the work done since the removal keeps
+          its place. The surplus is removed later against the depfiles a
+          successful compile writes.
+          MESSAGE
+          git push origin HEAD:main
