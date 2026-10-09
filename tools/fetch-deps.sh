@@ -95,19 +95,29 @@ cd "$WORKSPACE_DIR"
 # --no-history because none of these packages' histories are wanted: gclient is
 # here for their contents, and their histories are most of what they cost.
 #
-# --nohooks because the hooks are Chromium's tooling for their own review and
-# build infrastructure: landmines, clobber, tast, reclient, lastchange. They are
-# Python scripts that import each other, and keeping a tree buildable with them
-# means keeping their whole transitive import tail, which is a set nobody wrote
-# down and which grows by import. Charm builds an APK and does not run Chromium's
-# bots, so the scripts are not run.
-#
-# What that costs is knowable rather than guessed. Nothing fetched by a hook is
-# fetched, so if one of them turned out to produce something the build needs, the
-# first gn gen or ninja run will say so, and that hook can be re-enabled on
-# purpose. CHARM_DEPS_ARGS cannot switch them back on, since this flag is
-# unconditional; removing it from here is the way to do that.
+# --nohooks because most of them are Chromium's tooling for their own review and
+# build infrastructure: landmines, clobber, tast, reclient. They are Python
+# scripts that import each other, and keeping a tree buildable with all of them
+# means keeping their transitive import tail, which nobody wrote down and which
+# grows by import. Charm builds an APK and does not run Chromium's bots.
 gclient sync --no-history --nohooks ${CHARM_DEPS_ARGS:-}
+
+# One hook output is not tooling, it is build data.
+#
+# The PGO profiles V8 uses to build its snapshot blob are downloaded by a hook, and
+# with hooks off they never arrive, so the build stops on a missing input:
+#
+#   ninja: error: '../../v8/tools/builtins-pgo/profiles/x64.profile', needed by
+#   'snapshot_blob.bin', missing and no known rule to make it
+#
+# This is that hook's command, run here instead. The script is not ours: it is in
+# the v8 checkout gclient just made, so nothing is restored to the repository to
+# support it. The hook is conditioned on checkout_pgo_profiles, which is what
+# decides whether these are downloaded for an official build at all.
+if [ -f "$REPO_DIR/v8/tools/builtins-pgo/download_profiles.py" ]; then
+  ( cd "$REPO_DIR" && python3 v8/tools/builtins-pgo/download_profiles.py download \
+      --depot-tools third_party/depot_tools --check-v8-revision --quiet )
+fi
 
 # The revision this build is, written from Charm's own history.
 #
