@@ -40,6 +40,13 @@ on:
         required: false
         default: ''
 
+# Two runs at once would both push, and the second would fail on a ref that
+# moved while it was committing. Serialised instead, so a list can be handed
+# over in pieces without the pieces fighting.
+concurrency:
+  group: restore-deleted
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
