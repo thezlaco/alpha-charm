@@ -56,33 +56,6 @@ public class BottomSheetControllerFactory {
                 enableLargeFormFactorUi);
     }
 
-    /**
-     * Create {@link BottomSheetController} of full-width bottom sheets.
-     *
-     * @param scrimManagerSupplier A supplier of scrimManagerSupplier to be shown behind the sheet.
-     * @param window The activity's window.
-     * @param keyboardDelegate A means of hiding the keyboard.
-     * @param root The view that should contain the sheet.
-     * @param insetObserver The {@link InsetObserver} for inset changes.
-     */
-    public static ManagedBottomSheetController createFullWidthBottomSheetController(
-            final Supplier</* @Nullable */ ScrimManager> scrimManagerSupplier,
-            Window window,
-            KeyboardVisibilityDelegate keyboardDelegate,
-            Supplier<ViewGroup> root,
-            InsetObserver insetObserver) {
-        return new BottomSheetControllerImpl(
-                scrimManagerSupplier,
-                window,
-                keyboardDelegate,
-                root,
-                /* alwaysFullWidth= */ true,
-                () -> 0,
-                /* desktopWindowStateManager= */ null,
-                insetObserver,
-                /* enableLargeFormFactorUi= */ false);
-    }
-
     // Redirect methods to provider to make them only accessible to classes that have access to the
     // factory.
 
