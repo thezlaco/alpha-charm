@@ -12,7 +12,6 @@ import androidx.annotation.StringRes;
 import org.chromium.base.supplier.NonNullObservableSupplier;
 import org.chromium.base.supplier.ObservableSuppliers;
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 import org.chromium.components.webapps.R;
 
@@ -49,11 +48,6 @@ public class PwaRestoreBottomSheetContent implements BottomSheetContent {
     }
 
     @Override
-    public @Nullable View getToolbarView() {
-        return null;
-    }
-
-    @Override
     public float getHalfHeightRatio() {
         return BottomSheetContent.HeightMode.DISABLED;
     }
@@ -71,11 +65,6 @@ public class PwaRestoreBottomSheetContent implements BottomSheetContent {
     @Override
     public void onBackPressed() {
         mOsBackButtonClicked.run();
-    }
-
-    @Override
-    public int getVerticalScrollOffset() {
-        return 0;
     }
 
     @Override

@@ -128,12 +128,17 @@ public interface BottomSheetContent {
      *
      * @return The toolbar view.
      */
-    @Nullable View getToolbarView();
+    @Nullable
+    default View getToolbarView() {
+        return null;
+    }
 
     /**
      * @return The vertical scroll offset of the content view.
      */
-    int getVerticalScrollOffset();
+    default int getVerticalScrollOffset() {
+        return 0;
+    }
 
     /**
      * Called to destroy the {@link BottomSheetContent} when it is dismissed. The means the
@@ -142,7 +147,7 @@ public interface BottomSheetContent {
      * Cleanup can be done manually via the owning component (likely watching for the sheet hidden
      * event using an observer).
      */
-    void destroy();
+    default void destroy() {}
 
     /**
      * @return The priority of this content.

@@ -9,7 +9,6 @@ import android.view.View;
 
 import org.chromium.base.Callback;
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 import org.chromium.components.visited_url_ranking.url_grouping.GroupSuggestion;
 import org.chromium.components.visited_url_ranking.url_grouping.UserResponseMetadata;
@@ -43,19 +42,6 @@ public class GroupSuggestionsBottomSheetContent implements BottomSheetContent {
     public View getContentView() {
         return mContentView;
     }
-
-    @Override
-    public @Nullable View getToolbarView() {
-        return null;
-    }
-
-    @Override
-    public int getVerticalScrollOffset() {
-        return 0;
-    }
-
-    @Override
-    public void destroy() {}
 
     @Override
     public int getPriority() {

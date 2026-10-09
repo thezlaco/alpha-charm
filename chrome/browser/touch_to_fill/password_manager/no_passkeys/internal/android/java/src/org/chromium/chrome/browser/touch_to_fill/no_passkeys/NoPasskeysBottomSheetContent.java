@@ -107,16 +107,6 @@ class NoPasskeysBottomSheetContent implements BottomSheetContent {
     }
 
     @Override
-    public @Nullable View getToolbarView() {
-        return null;
-    }
-
-    @Override
-    public int getVerticalScrollOffset() {
-        return 0;
-    }
-
-    @Override
     public void destroy() {
         mDelegate.onDestroy();
     }

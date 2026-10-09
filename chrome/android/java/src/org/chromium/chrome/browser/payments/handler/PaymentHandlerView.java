@@ -123,9 +123,6 @@ import org.chromium.content_public.browser.WebContents;
     }
 
     @Override
-    public void destroy() {}
-
-    @Override
     public @ContentPriority int getPriority() {
         // If multiple bottom sheets are queued up to be shown, prioritize payment-handler, because
         // it's triggered by a user gesture, such as a click on <button>Buy this article</button>.

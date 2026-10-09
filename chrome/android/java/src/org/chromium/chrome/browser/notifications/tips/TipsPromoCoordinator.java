@@ -29,7 +29,6 @@ import org.chromium.base.supplier.NonNullObservableSupplier;
 import org.chromium.base.supplier.ObservableSuppliers;
 import org.chromium.base.supplier.SettableNonNullObservableSupplier;
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.R;
 import org.chromium.chrome.browser.layouts.LayoutManager;
 import org.chromium.chrome.browser.lens.LensController;
@@ -477,12 +476,6 @@ public class TipsPromoCoordinator {
         @Override
         public View getContentView() {
             return mContentView;
-        }
-
-        @Nullable
-        @Override
-        public View getToolbarView() {
-            return null;
         }
 
         /**

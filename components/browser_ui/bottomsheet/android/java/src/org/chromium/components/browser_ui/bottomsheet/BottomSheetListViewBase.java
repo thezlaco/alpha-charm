@@ -391,11 +391,6 @@ public abstract class BottomSheetListViewBase implements BottomSheetContent {
     }
 
     @Override
-    public @Nullable View getToolbarView() {
-        return null;
-    }
-
-    @Override
     public int getPriority() {
         return BottomSheetContent.ContentPriority.HIGH;
     }

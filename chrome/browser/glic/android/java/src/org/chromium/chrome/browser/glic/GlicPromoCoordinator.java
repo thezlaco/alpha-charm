@@ -17,7 +17,6 @@ import org.chromium.base.supplier.NonNullObservableSupplier;
 import org.chromium.base.supplier.ObservableSuppliers;
 import org.chromium.base.supplier.SettableNonNullObservableSupplier;
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController.StateChangeReason;
@@ -148,12 +147,6 @@ public class GlicPromoCoordinator {
         @Override
         public View getContentView() {
             return mContentView;
-        }
-
-        @Nullable
-        @Override
-        public View getToolbarView() {
-            return null;
         }
 
         @Override

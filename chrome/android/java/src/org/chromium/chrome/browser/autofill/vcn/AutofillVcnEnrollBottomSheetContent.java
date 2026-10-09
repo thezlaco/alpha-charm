@@ -11,7 +11,6 @@ import android.widget.ScrollView;
 import androidx.annotation.StringRes;
 
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.R;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 
@@ -40,11 +39,6 @@ import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
     @Override
     public View getContentView() {
         return mContentView;
-    }
-
-    @Override
-    public @Nullable View getToolbarView() {
-        return null;
     }
 
     @Override

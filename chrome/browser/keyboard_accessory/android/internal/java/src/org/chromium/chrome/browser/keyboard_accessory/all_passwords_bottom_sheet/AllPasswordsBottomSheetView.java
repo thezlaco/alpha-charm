@@ -151,12 +151,6 @@ class AllPasswordsBottomSheetView implements BottomSheetContent {
         return mContentView;
     }
 
-    @Nullable
-    @Override
-    public View getToolbarView() {
-        return null;
-    }
-
     @Override
     public int getVerticalScrollOffset() {
         return mSheetItemListView.computeVerticalScrollOffset();

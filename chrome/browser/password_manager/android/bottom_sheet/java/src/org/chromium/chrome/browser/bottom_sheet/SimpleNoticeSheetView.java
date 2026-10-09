@@ -19,7 +19,6 @@ import androidx.annotation.StringRes;
 import androidx.appcompat.content.res.AppCompatResources;
 
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.browser.password_manager.PasswordManagerResourceProviderFactory;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 import org.chromium.ui.widget.TextViewWithClickableSpans;
@@ -69,19 +68,6 @@ class SimpleNoticeSheetView implements BottomSheetContent {
     public View getContentView() {
         return mContentView;
     }
-
-    @Override
-    public @Nullable View getToolbarView() {
-        return null;
-    }
-
-    @Override
-    public int getVerticalScrollOffset() {
-        return 0;
-    }
-
-    @Override
-    public void destroy() {}
 
     @Override
     public int getPriority() {

@@ -10,7 +10,6 @@ import android.view.View;
 import androidx.annotation.StringRes;
 
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 import org.chromium.components.webapps.R;
 
@@ -42,11 +41,6 @@ public class PwaInstallBottomSheetContent implements BottomSheetContent {
     }
 
     @Override
-    public @Nullable View getToolbarView() {
-        return null;
-    }
-
-    @Override
     public int getPeekHeight() {
         return mView.getPeekHeight();
     }
@@ -61,9 +55,6 @@ public class PwaInstallBottomSheetContent implements BottomSheetContent {
         // TODO(finnur): Handle this correctly for small screens.
         return 0;
     }
-
-    @Override
-    public void destroy() {}
 
     @Override
     public int getPriority() {

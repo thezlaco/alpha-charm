@@ -58,17 +58,9 @@ public class TabGroupShareNoticeBottomSheetView extends LinearLayout implements 
     }
 
     @Override
-    public @Nullable View getToolbarView() {
-        return null;
-    }
-
-    @Override
     public int getVerticalScrollOffset() {
         return mContentView.getScrollY();
     }
-
-    @Override
-    public void destroy() {}
 
     @Override
     public boolean swipeToDismissEnabled() {

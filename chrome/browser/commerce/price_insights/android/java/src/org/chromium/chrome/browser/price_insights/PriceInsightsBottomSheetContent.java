@@ -12,7 +12,6 @@ import android.widget.ScrollView;
 import androidx.annotation.StringRes;
 
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.R;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 
@@ -31,11 +30,6 @@ public class PriceInsightsBottomSheetContent implements BottomSheetContent {
     @Override
     public View getContentView() {
         return mContentView;
-    }
-
-    @Override
-    public @Nullable View getToolbarView() {
-        return null;
     }
 
     @Override
@@ -65,9 +59,6 @@ public class PriceInsightsBottomSheetContent implements BottomSheetContent {
     public boolean swipeToDismissEnabled() {
         return true;
     }
-
-    @Override
-    public void destroy() {}
 
     @Override
     public String getSheetContentDescription(Context context) {

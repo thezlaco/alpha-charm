@@ -61,9 +61,6 @@ public class MerchantTrustBottomSheetContent implements BottomSheetContent {
     }
 
     @Override
-    public void destroy() {}
-
-    @Override
     public int getPriority() {
         return ContentPriority.HIGH;
     }

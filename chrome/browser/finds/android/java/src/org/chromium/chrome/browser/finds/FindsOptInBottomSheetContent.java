@@ -11,7 +11,6 @@ import androidx.annotation.StringRes;
 
 import org.chromium.base.supplier.NonNullObservableSupplier;
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.R;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 
@@ -37,12 +36,6 @@ class FindsOptInBottomSheetContent implements BottomSheetContent {
     @Override
     public View getContentView() {
         return mContentView;
-    }
-
-    @Nullable
-    @Override
-    public View getToolbarView() {
-        return null;
     }
 
     @Override

@@ -13,7 +13,6 @@ import androidx.annotation.StringRes;
 
 import org.chromium.base.metrics.RecordUserAction;
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.R;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
@@ -38,19 +37,6 @@ class NoTargetDeviceBottomSheetContent implements BottomSheetContent {
     public View getContentView() {
         return mContentView;
     }
-
-    @Override
-    public @Nullable View getToolbarView() {
-        return null;
-    }
-
-    @Override
-    public int getVerticalScrollOffset() {
-        return 0;
-    }
-
-    @Override
-    public void destroy() {}
 
     @Override
     public int getPriority() {

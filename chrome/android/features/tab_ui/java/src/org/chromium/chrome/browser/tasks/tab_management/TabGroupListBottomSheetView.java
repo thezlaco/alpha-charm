@@ -23,7 +23,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.R;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
@@ -73,18 +72,9 @@ public class TabGroupListBottomSheetView implements BottomSheetContent {
     }
 
     @Override
-    @Nullable
-    public View getToolbarView() {
-        return null;
-    }
-
-    @Override
     public int getVerticalScrollOffset() {
         return mRecyclerView.getScrollY();
     }
-
-    @Override
-    public void destroy() {}
 
     @Override
     public boolean swipeToDismissEnabled() {

@@ -11,7 +11,6 @@ import android.view.View;
 import androidx.annotation.StringRes;
 
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 
 /** The bottom sheet content that contains a list of recent activities for a collaboration. */
@@ -32,19 +31,6 @@ class RecentActivityBottomSheetContent implements BottomSheetContent {
     public View getContentView() {
         return mContentView;
     }
-
-    @Override
-    public @Nullable View getToolbarView() {
-        return null;
-    }
-
-    @Override
-    public int getVerticalScrollOffset() {
-        return 0;
-    }
-
-    @Override
-    public void destroy() {}
 
     @Override
     public boolean hasCustomLifecycle() {

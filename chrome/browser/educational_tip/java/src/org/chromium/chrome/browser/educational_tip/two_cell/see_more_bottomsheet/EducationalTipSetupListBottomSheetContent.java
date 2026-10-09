@@ -33,18 +33,10 @@ public class EducationalTipSetupListBottomSheetContent implements BottomSheetCon
     }
 
     @Override
-    public @Nullable View getToolbarView() {
-        return null;
-    }
-
-    @Override
     public int getVerticalScrollOffset() {
         // TODO(crbug.com/479597724): Implement vertical scroll offset.
         return 0;
     }
-
-    @Override
-    public void destroy() {}
 
     @Override
     public float getHalfHeightRatio() {

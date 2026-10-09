@@ -17,7 +17,6 @@ import androidx.annotation.StringRes;
 import androidx.appcompat.content.res.AppCompatResources;
 
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.browser.password_manager.PasswordManagerResourceProviderFactory;
 import org.chromium.chrome.browser.touch_to_fill.common.TouchToFillUtil;
 import org.chromium.chrome.browser.touch_to_fill.password_generation.TouchToFillPasswordGenerationCoordinator.GenerationCallback;
@@ -109,19 +108,6 @@ class TouchToFillPasswordGenerationView implements BottomSheetContent {
     public View getContentView() {
         return mContent;
     }
-
-    @Override
-    public @Nullable View getToolbarView() {
-        return null;
-    }
-
-    @Override
-    public int getVerticalScrollOffset() {
-        return 0;
-    }
-
-    @Override
-    public void destroy() {}
 
     @Override
     public int getPriority() {

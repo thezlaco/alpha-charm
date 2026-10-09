@@ -12,7 +12,6 @@ import android.widget.ScrollView;
 import androidx.annotation.StringRes;
 
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 
 /** Implements the bottom sheet content for the secure payment confirmation bottom sheet. */
@@ -36,11 +35,6 @@ import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
     @Override
     public View getContentView() {
         return mContentView;
-    }
-
-    @Override
-    public @Nullable View getToolbarView() {
-        return null;
     }
 
     @Override

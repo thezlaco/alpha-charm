@@ -13,7 +13,6 @@ import androidx.annotation.StringRes;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
 
@@ -44,20 +43,12 @@ public class CommerceBottomSheetContent implements BottomSheetContent {
     }
 
     @Override
-    public @Nullable View getToolbarView() {
-        return null;
-    }
-
-    @Override
     public int getVerticalScrollOffset() {
         if (mRecyclerView != null) {
             return mRecyclerView.computeVerticalScrollOffset();
         }
         return 0;
     }
-
-    @Override
-    public void destroy() {}
 
     @Override
     public int getPriority() {

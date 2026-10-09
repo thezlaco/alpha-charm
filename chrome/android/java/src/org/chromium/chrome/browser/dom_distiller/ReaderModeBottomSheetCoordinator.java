@@ -157,19 +157,6 @@ public class ReaderModeBottomSheetCoordinator {
         }
 
         @Override
-        public @Nullable View getToolbarView() {
-            return null;
-        }
-
-        @Override
-        public int getVerticalScrollOffset() {
-            return 0;
-        }
-
-        @Override
-        public void destroy() {}
-
-        @Override
         public int getPriority() {
             return BottomSheetContent.ContentPriority.LOW;
         }

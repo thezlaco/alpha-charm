@@ -10,7 +10,6 @@ import android.view.View;
 import androidx.annotation.StringRes;
 
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 
 /** Bottom sheet content to provide data sharing service to TabGridDialog. */
@@ -26,19 +25,6 @@ public class TabGridDialogShareBottomSheetContent implements BottomSheetContent 
     public View getContentView() {
         return mContentView;
     }
-
-    @Override
-    public @Nullable View getToolbarView() {
-        return null;
-    }
-
-    @Override
-    public int getVerticalScrollOffset() {
-        return 0;
-    }
-
-    @Override
-    public void destroy() {}
 
     @Override
     public int getPriority() {

@@ -171,11 +171,6 @@ class FacilitatedPaymentsPaymentMethodsView implements BottomSheetContent {
     }
 
     @Override
-    public @Nullable View getToolbarView() {
-        return null;
-    }
-
-    @Override
     public int getPriority() {
         return ContentPriority.HIGH;
     }
@@ -199,9 +194,6 @@ class FacilitatedPaymentsPaymentMethodsView implements BottomSheetContent {
     public float getFullHeightRatio() {
         return HeightMode.WRAP_CONTENT;
     }
-
-    @Override
-    public void destroy() {}
 
     @Override
     public int getVerticalScrollOffset() {

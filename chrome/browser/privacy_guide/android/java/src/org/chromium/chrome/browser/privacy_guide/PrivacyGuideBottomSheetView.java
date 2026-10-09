@@ -12,7 +12,6 @@ import androidx.annotation.StringRes;
 import org.chromium.base.supplier.NonNullObservableSupplier;
 import org.chromium.base.supplier.ObservableSuppliers;
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 
 /** Bottom sheet view for displaying privacy guide control explanations */
@@ -44,17 +43,9 @@ public class PrivacyGuideBottomSheetView implements BottomSheetContent {
     }
 
     @Override
-    public @Nullable View getToolbarView() {
-        return null;
-    }
-
-    @Override
     public int getVerticalScrollOffset() {
         return mContentView.getScrollY();
     }
-
-    @Override
-    public void destroy() {}
 
     @Override
     public int getPriority() {

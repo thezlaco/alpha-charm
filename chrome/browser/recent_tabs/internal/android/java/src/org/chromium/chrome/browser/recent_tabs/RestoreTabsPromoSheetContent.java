@@ -20,7 +20,6 @@ import org.chromium.base.supplier.NonNullObservableSupplier;
 import org.chromium.base.supplier.ObservableSuppliers;
 import org.chromium.base.supplier.SettableNonNullObservableSupplier;
 import org.chromium.build.annotations.NullMarked;
-import org.chromium.build.annotations.Nullable;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetObserver;
@@ -72,12 +71,6 @@ public class RestoreTabsPromoSheetContent implements BottomSheetContent {
         return mContentView;
     }
 
-    @Nullable
-    @Override
-    public View getToolbarView() {
-        return null;
-    }
-
     /**
      * The vertical scroll offset of the recycler view's list containing the user's devices
      * or the currently selected device's tab items. The offset prevents scroll flinging from
@@ -102,9 +95,6 @@ public class RestoreTabsPromoSheetContent implements BottomSheetContent {
 
         return 0;
     }
-
-    @Override
-    public void destroy() {}
 
     @Override
     public int getPriority() {

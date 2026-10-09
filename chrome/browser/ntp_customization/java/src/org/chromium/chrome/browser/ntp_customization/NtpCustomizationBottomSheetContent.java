@@ -67,11 +67,6 @@ public class NtpCustomizationBottomSheetContent implements BottomSheetContent {
     }
 
     @Override
-    public @Nullable View getToolbarView() {
-        return null;
-    }
-
-    @Override
     public int getVerticalScrollOffset() {
         RecyclerView recyclerView = getActiveRecyclerView();
         if (recyclerView != null) {

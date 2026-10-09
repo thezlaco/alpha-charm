@@ -280,12 +280,6 @@ public class TipsOptInCoordinator {
             return mContentView;
         }
 
-        @Nullable
-        @Override
-        public View getToolbarView() {
-            return null;
-        }
-
         /**
          * The vertical scroll offset of the bottom sheet. The offset prevents scroll flinging from
          * dismissing the sheet.

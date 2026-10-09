@@ -200,16 +200,8 @@ public class AccountSelectionBottomSheetContent implements BottomSheetContent {
     }
 
     @Override
-    public void destroy() {}
-
-    @Override
     public View getContentView() {
         return mContentView;
-    }
-
-    @Override
-    public @Nullable View getToolbarView() {
-        return null;
     }
 
     @Override

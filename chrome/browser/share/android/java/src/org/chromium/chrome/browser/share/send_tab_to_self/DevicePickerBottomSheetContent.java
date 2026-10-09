@@ -108,14 +108,6 @@ class DevicePickerBottomSheetContent implements BottomSheetContent, OnItemClickL
     }
 
     @Override
-    public int getVerticalScrollOffset() {
-        return 0;
-    }
-
-    @Override
-    public void destroy() {}
-
-    @Override
     public int getPriority() {
         return BottomSheetContent.ContentPriority.HIGH;
     }

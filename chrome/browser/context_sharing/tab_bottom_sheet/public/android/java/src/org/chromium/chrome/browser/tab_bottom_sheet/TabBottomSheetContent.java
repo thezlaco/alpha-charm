@@ -65,20 +65,6 @@ public abstract class TabBottomSheetContent implements BottomSheetContent {
         return mContentView;
     }
 
-    @Nullable
-    @Override
-    public View getToolbarView() {
-        return null;
-    }
-
-    @Override
-    public int getVerticalScrollOffset() {
-        return 0;
-    }
-
-    @Override
-    public void destroy() {}
-
     @Override
     public int getPriority() {
         return BottomSheetContent.ContentPriority.COBROWSE;
