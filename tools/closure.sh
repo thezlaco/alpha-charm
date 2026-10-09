@@ -258,9 +258,18 @@ print("%d distinct inputs, since ninja can print one file twice" % len(set(input
 print("%d files gn read, of which %d are in this repository" % (len(gn_read), len(gn_in_tree)))
 print("%d files in the closure of both, and %d tracked files in total" % (len(closure), len(tracked)))
 
+# A violation of an invariant is collected rather than raised on the spot, so that
+# one run reports every problem it found instead of only the first. It is still
+# fatal: the measurement is written out for reading, but the exit status says the
+# numbers cannot be trusted, and something reading only the status must not
+# mistake a broken measurement for a sound one.
+problems = []
+
 accounted = len(in_tree) + len(elsewhere)
 if accounted != len(set(inputs)):
-    print("these do not add up to the inputs: %d against %d" % (accounted, len(set(inputs))))
+    problems.append("these do not add up to the inputs: %d against %d"
+                    % (accounted, len(set(inputs))))
+    print(problems[-1])
 
 # Every target that was reached needs a BUILD file for gn to have loaded it. If
 # one is missing, the list of files gn read is incomplete, and a closure built on
@@ -282,6 +291,10 @@ print("%d of those absent from the list gn read, which would mean the list is sh
       % len(absent))
 for name in absent[:10]:
     print("    absent: %s" % name)
+if absent:
+    problems.append("%d of the BUILD files the graph needs are missing from the list "
+                    "gn read, so the list is short and the closure would delete a "
+                    "BUILD file the build needs" % len(absent))
 
 # A file DEPS names and the tree does not hold makes gclient unable to parse
 # DEPS, so this is checked the way the BUILD files are: by name.
@@ -300,7 +313,15 @@ for name in deps_lost[:10]:
 if tracked:
     print("%d of %d tracked files, %.2f%%" % (len(closure), len(tracked), 100 * len(closure) / len(tracked)))
 else:
-    print("no share: the checkout reported no tracked files to compare against")
+    problems.append("no share: the checkout reported no tracked files to compare against")
+    print(problems[-1])
+
+if problems:
+    print("")
+    print("%d of these checks failed, so this closure cannot be relied on:" % len(problems))
+    for problem in problems:
+        print("    %s" % problem)
+    sys.exit(1)
 PYTHON
 
 printf '\nWrote %s/deps.txt, %s/inputs.txt, %s/repo-inputs.txt\n' "$OUT_DIR" "$OUT_DIR" "$OUT_DIR"
