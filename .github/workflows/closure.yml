@@ -136,6 +136,20 @@ jobs:
         working-directory: src
         run: ./tools/closure.sh
 
+      # The closure proves the tree is whole, which is not the same as proving it
+      # compiles. gn reads the graph and never calls javac, so an edit that
+      # removes a method a subclass still needs passes every check above and
+      # fails only when the browser is built.
+      #
+      # This is the one step that does compile, and it compiles the Java half
+      # rather than the browser, so it costs minutes instead of hours. It is
+      # allowed to fail the job: unlike the measurement, a Java error is not a
+      # number that a human can interpret, it is a mistake that has to be fixed
+      # before it lands.
+      - name: Compile the Java half
+        working-directory: src
+        run: ./tools/compile-javac.sh
+
       # The raw lists go out as an artifact and the numbers are printed, so the
       # next removal decision can be made against this run rather than against
       # an estimate. Nothing is written back to the tree: a measurement that
