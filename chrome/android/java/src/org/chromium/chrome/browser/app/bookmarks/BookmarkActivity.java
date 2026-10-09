@@ -41,6 +41,7 @@ import org.chromium.chrome.browser.url_constants.UrlConstantResolverFactory;
 import org.chromium.components.bookmarks.BookmarkId;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetControllerFactory;
+import org.chromium.components.browser_ui.bottomsheet.BottomSheetParams;
 import org.chromium.components.browser_ui.modaldialog.AppModalPresenter;
 import org.chromium.components.browser_ui.styles.SemanticColorUtils;
 import org.chromium.components.browser_ui.widget.scrim.ScrimManager;
@@ -91,16 +92,18 @@ public class BookmarkActivity extends SnackbarActivity {
         ViewGroup sheetContainer = findViewById(R.id.sheet_container);
         BottomSheetController bottomSheetController =
                 BottomSheetControllerFactory.createBottomSheetController(
-                        () -> scrimManager,
-                        getWindow(),
-                        getWindowAndroid().getKeyboardDelegate(),
-                        () -> sheetContainer,
-                        this::getEdgeToEdgeInset,
-                        /* desktopWindowStateManager= */ null,
-                        getWindowAndroid().getInsetObserver(),
-                        /* enableLargeFormFactorUi= */ ChromeFeatureList
-                                .sBottomSheetOnDesktopWindowing
-                                .isEnabled());
+                        new BottomSheetParams()
+                                .newBuilder(
+                                        () -> scrimManager,
+                                        getWindow(),
+                                        getWindowAndroid().getKeyboardDelegate(),
+                                        () -> sheetContainer,
+                                        getWindowAndroid().getInsetObserver())
+                                .setEdgeToEdgeBottomInsetSupplier(() -> getEdgeToEdgeInset())
+                                .setEnableLargeFormFactorUi(
+                                        ChromeFeatureList.sBottomSheetOnDesktopWindowing
+                                                .isEnabled())
+                                .build());
 
         mBookmarkUiPrefs = new BookmarkUiPrefs(ChromeSharedPreferences.getInstance());
         mBookmarkManagerCoordinator =

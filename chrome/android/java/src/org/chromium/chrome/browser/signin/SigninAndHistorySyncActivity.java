@@ -48,6 +48,7 @@ import org.chromium.chrome.browser.ui.signin.SigninUtils;
 import org.chromium.chrome.browser.ui.system.StatusBarColorController;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetControllerFactory;
+import org.chromium.components.browser_ui.bottomsheet.BottomSheetParams;
 import org.chromium.components.browser_ui.modaldialog.AppModalPresenter;
 import org.chromium.components.browser_ui.styles.SemanticColorUtils;
 import org.chromium.components.browser_ui.widget.gesture.BackPressHandler;
@@ -415,16 +416,17 @@ public class SigninAndHistorySyncActivity extends FullscreenSigninAndHistorySync
 
         BottomSheetController bottomSheetController =
                 BottomSheetControllerFactory.createBottomSheetController(
-                        () -> scrimManager,
-                        getWindow(),
-                        KeyboardVisibilityDelegate.getInstance(),
-                        () -> sheetContainer,
-                        () -> 0,
-                        /* desktopWindowStateManager= */ null,
-                        getInsetObserver(),
-                        /* enableLargeFormFactorUi= */ ChromeFeatureList
-                                .sBottomSheetOnDesktopWindowing
-                                .isEnabled());
+                        new BottomSheetParams()
+                                .newBuilder(
+                                        () -> scrimManager,
+                                        getWindow(),
+                                        KeyboardVisibilityDelegate.getInstance(),
+                                        () -> sheetContainer,
+                                        getInsetObserver())
+                                .setEnableLargeFormFactorUi(
+                                        ChromeFeatureList.sBottomSheetOnDesktopWindowing
+                                                .isEnabled())
+                                .build());
         BackPressHandler bottomSheetBackPressHandler =
                 bottomSheetController.getBottomSheetBackPressHandler();
         BackPressHelper.create(this, getOnBackPressedDispatcher(), bottomSheetBackPressHandler);

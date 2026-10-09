@@ -4,56 +4,28 @@
 
 package org.chromium.components.browser_ui.bottomsheet;
 
-import android.view.ViewGroup;
-import android.view.Window;
-
 import org.chromium.base.Callback;
 import org.chromium.build.annotations.NullUnmarked;
-import org.chromium.build.annotations.Nullable;
-import org.chromium.components.browser_ui.desktop_windowing.DesktopWindowStateManager;
-import org.chromium.components.browser_ui.widget.scrim.ScrimManager;
-import org.chromium.ui.KeyboardVisibilityDelegate;
 import org.chromium.ui.base.WindowAndroid;
-import org.chromium.ui.insets.InsetObserver;
-
-import java.util.function.Supplier;
 
 /** A factory for producing a {@link BottomSheetController}. */
-// @Nullable annotations inside generic types are not supported. See https://crbug.com/433562519.
 @NullUnmarked
 public class BottomSheetControllerFactory {
     /**
-     * @param scrimManagerSupplier Suppliers the {@link ScrimManager}, used to show scrims behind
-     *     the sheet.
-     * @param window The activity's window.
-     * @param keyboardDelegate A means of hiding the keyboard.
-     * @param root The view that should contain the sheet.
-     * @param edgeToEdgeBottomInsetSupplier Supplier of bottom inset when e2e is on.
-     * @param desktopWindowStateManager The {@link DesktopWindowStateManager} for the app header.
-     * @param insetObserver The {@link InsetObserver} for inset changes.
-     * @param enableLargeFormFactorUi Whether to use a different UI explicitly designed for bottom
-     *     sheets when operating in a desktop or large form factor environment. Some implementations
-     *     may want to opt out of this behavior.
+     * @param params What the sheet is to be attached to, and how it is to behave.
      */
     public static ManagedBottomSheetController createBottomSheetController(
-            final Supplier</* @Nullable */ ScrimManager> scrimManagerSupplier,
-            Window window,
-            KeyboardVisibilityDelegate keyboardDelegate,
-            Supplier<ViewGroup> root,
-            Supplier<Integer> edgeToEdgeBottomInsetSupplier,
-            @Nullable DesktopWindowStateManager desktopWindowStateManager,
-            InsetObserver insetObserver,
-            boolean enableLargeFormFactorUi) {
+            BottomSheetParams params) {
         return new BottomSheetControllerImpl(
-                scrimManagerSupplier,
-                window,
-                keyboardDelegate,
-                root,
+                params.getScrimManagerSupplier(),
+                params.getWindow(),
+                params.getKeyboardDelegate(),
+                params.getRoot(),
                 /* alwaysFullWidth= */ false,
-                edgeToEdgeBottomInsetSupplier,
-                desktopWindowStateManager,
-                insetObserver,
-                enableLargeFormFactorUi);
+                params.getEdgeToEdgeBottomInsetSupplier(),
+                params.getDesktopWindowStateManager(),
+                params.getInsetObserver(),
+                params.getEnableLargeFormFactorUi());
     }
 
     // Redirect methods to provider to make them only accessible to classes that have access to the

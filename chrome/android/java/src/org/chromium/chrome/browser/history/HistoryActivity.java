@@ -23,6 +23,7 @@ import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.ui.edge_to_edge.EdgeToEdgeControllerFactory;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetControllerFactory;
+import org.chromium.components.browser_ui.bottomsheet.BottomSheetParams;
 import org.chromium.components.browser_ui.bottomsheet.ManagedBottomSheetController;
 import org.chromium.components.browser_ui.modaldialog.AppModalPresenter;
 import org.chromium.components.browser_ui.widget.scrim.ScrimManager;
@@ -94,16 +95,17 @@ public class HistoryActivity extends SnackbarActivity {
                 new ScrimManager(this, contentView, ScrimClient.HISTORY_ACTIVITY);
         mBottomSheetController =
                 BottomSheetControllerFactory.createBottomSheetController(
-                        SupplierUtils.of(scrimManager),
-                        getWindow(),
-                        getWindowAndroid().getKeyboardDelegate(),
-                        SupplierUtils.of(sheetContainer),
-                        SupplierUtils.of(0),
-                        /* desktopWindowStateManager= */ null,
-                        getWindowAndroid().getInsetObserver(),
-                        /* enableLargeFormFactorUi= */ ChromeFeatureList
-                                .sBottomSheetOnDesktopWindowing
-                                .isEnabled());
+                        new BottomSheetParams()
+                                .newBuilder(
+                                        SupplierUtils.of(scrimManager),
+                                        getWindow(),
+                                        getWindowAndroid().getKeyboardDelegate(),
+                                        SupplierUtils.of(sheetContainer),
+                                        getWindowAndroid().getInsetObserver())
+                                .setEnableLargeFormFactorUi(
+                                        ChromeFeatureList.sBottomSheetOnDesktopWindowing
+                                                .isEnabled())
+                                .build());
 
         // HistoryActivity needs its own container for bottom sheet. Add it as a child of the
         // layout enclosing the history list layout so they'll be siblings. HistoryPage doesn't

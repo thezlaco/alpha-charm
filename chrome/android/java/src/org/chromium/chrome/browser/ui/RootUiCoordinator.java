@@ -227,6 +227,7 @@ import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController.SheetState;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetControllerFactory;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetObserver;
+import org.chromium.components.browser_ui.bottomsheet.BottomSheetParams;
 import org.chromium.components.browser_ui.bottomsheet.EmptyBottomSheetObserver;
 import org.chromium.components.browser_ui.bottomsheet.ExpandedSheetHelper;
 import org.chromium.components.browser_ui.bottomsheet.ManagedBottomSheetController;
@@ -2532,26 +2533,31 @@ public class RootUiCoordinator
         // suppliers.
         ManagedBottomSheetController bottomSheetController =
                 BottomSheetControllerFactory.createBottomSheetController(
-                        mScrimManagerSupplier,
-                        mActivity.getWindow(),
-                        mWindowAndroid.getKeyboardDelegate(),
-                        () -> {
-                            if (mActivity != null) {
-                                return mActivity.findViewById(R.id.sheet_container);
-                            }
-                            return null;
-                        },
-                        () -> {
-                            var edgeToEdgeController = mEdgeToEdgeControllerSupplier.get();
-                            return edgeToEdgeController == null
-                                    ? 0
-                                    : edgeToEdgeController.getBottomInset();
-                        },
-                        getDesktopWindowStateManager(),
-                        mWindowAndroid.getInsetObserver(),
-                        /* enableLargeFormFactorUi= */ ChromeFeatureList
-                                .sBottomSheetOnDesktopWindowing
-                                .isEnabled());
+                        new BottomSheetParams()
+                                .newBuilder(
+                                        mScrimManagerSupplier,
+                                        mActivity.getWindow(),
+                                        mWindowAndroid.getKeyboardDelegate(),
+                                        () -> {
+                                            if (mActivity != null) {
+                                                return mActivity.findViewById(R.id.sheet_container);
+                                            }
+                                            return null;
+                                        },
+                                        mWindowAndroid.getInsetObserver())
+                                .setEdgeToEdgeBottomInsetSupplier(
+                                        () -> {
+                                            var edgeToEdgeController =
+                                                    mEdgeToEdgeControllerSupplier.get();
+                                            return edgeToEdgeController == null
+                                                    ? 0
+                                                    : edgeToEdgeController.getBottomInset();
+                                        })
+                                .setDesktopWindowStateManager(getDesktopWindowStateManager())
+                                .setEnableLargeFormFactorUi(
+                                        ChromeFeatureList.sBottomSheetOnDesktopWindowing
+                                                .isEnabled())
+                                .build());
         mBottomSheetControllerSupplier.set(bottomSheetController);
         BottomSheetControllerFactory.setExceptionReporter(
                 ChromePureJavaExceptionReporter::reportJavaException);

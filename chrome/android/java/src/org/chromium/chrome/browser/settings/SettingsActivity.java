@@ -72,6 +72,7 @@ import org.chromium.chrome.browser.ui.messages.snackbar.SnackbarManager.Snackbar
 import org.chromium.chrome.browser.util.DefaultBrowserInfo;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetControllerFactory;
+import org.chromium.components.browser_ui.bottomsheet.BottomSheetParams;
 import org.chromium.components.browser_ui.bottomsheet.ManagedBottomSheetController;
 import org.chromium.components.browser_ui.desktop_windowing.AppHeaderState;
 import org.chromium.components.browser_ui.desktop_windowing.DesktopWindowStateManager.AppHeaderObserver;
@@ -575,16 +576,17 @@ public class SettingsActivity extends ChromeBaseAppCompatActivity
 
         mManagedBottomSheetController =
                 BottomSheetControllerFactory.createBottomSheetController(
-                        () -> mScrimManager,
-                        getWindow(),
-                        KeyboardVisibilityDelegate.getInstance(),
-                        () -> sheetContainer,
-                        () -> 0,
-                        /* desktopWindowStateManager= */ null,
-                        getInsetObserver(),
-                        /* enableLargeFormFactorUi= */ ChromeFeatureList
-                                .sBottomSheetOnDesktopWindowing
-                                .isEnabled());
+                        new BottomSheetParams()
+                                .newBuilder(
+                                        () -> mScrimManager,
+                                        getWindow(),
+                                        KeyboardVisibilityDelegate.getInstance(),
+                                        () -> sheetContainer,
+                                        getInsetObserver())
+                                .setEnableLargeFormFactorUi(
+                                        ChromeFeatureList.sBottomSheetOnDesktopWindowing
+                                                .isEnabled())
+                                .build());
         mBottomSheetControllerSupplier.set(mManagedBottomSheetController);
     }
 
