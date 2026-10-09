@@ -128,12 +128,6 @@ public class BottomSheetParams {
         // answers, rather than a decision every caller has to make.
         private Supplier<Integer> mEdgeToEdgeBottomInsetSupplier = () -> 0;
         private @Nullable DesktopWindowStateManager mDesktopWindowStateManager;
-
-        // Nothing sets this yet. The factory that created full width sheets was removed as unused,
-        // and the controller reads the flag once, to hand it to the sheet, which branches on it to
-        // lay itself out. It is kept here so that the controller and the sheet keep agreeing on
-        // what they were asked for, rather than one of them inventing an answer the other cannot
-        // see.
         private boolean mEnableLargeFormFactorUi;
 
         /**
