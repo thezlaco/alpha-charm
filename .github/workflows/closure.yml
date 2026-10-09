@@ -8,14 +8,25 @@ name: closure
 # measurement wait on the expensive thing and cost an hour of runner time to
 # learn nothing.
 #
-# Manual. The answer changes only when the tree does, so running it on every push
-# would spend the scarce resource to recompute a number already known.
-#
 # The work itself lives in tools/, so the same commands run unchanged on a build
 # machine over SSH. This workflow only prepares a machine and calls them.
+#
+# Runs on every push, because a measurement nobody triggers is a measurement that
+# goes stale. The number only changes when the tree does, but the tree changes on
+# every commit, and a report that still describes the previous commit is worse
+# than a report that costs runner time. It is also what catches a removal that
+# was wrong: the invariant that fails is the one that was written to fail.
+#
+# This is a report, not a gate. A change to the closure is reported and does not
+# fail the job, so a legitimate merge that adds a file does not need a human to
+# accept anything before it lands.
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
 
 concurrency:
   group: ${{ github.workflow }}
