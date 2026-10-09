@@ -27,19 +27,23 @@ target_cpu = "arm64"
 # reachable from chrome_public_apk, and no platform modulemap is a build input,
 # so the only thing the generated files did was satisfy the assert.
 #
-# clang modules off, and the generated module definitions went with it.
+# clang modules stay on, and this is not a preference.
 #
-# What that costs was checked rather than assumed, since this is Chromium's fastest
-# path through the C++ and not a thing to turn off without knowing. Both configs
-# carrying the module flags, //build/config/compiler:compiler_deterministic and
-# :libcxx_module, appear nowhere among the targets chrome_public_apk reaches.
-# Precompiled headers are already off through is_official_build. Nothing in the
-# closure ever read a generated module, which is why the files could go.
+# use_libcxx_modules defaults to is_clang and does not read use_clang_modules, and
+# //build/config/BUILDCONFIG.gn puts //buildtools/third_party/libc++:all_modules in
+# the dependencies of every target where it is set. That target is defined by the
+# first of three branches, all of which are guarded on use_clang_modules, so
+# switching it off leaves the label undefined rather than unused, and gn stops.
 #
-# It stays set, rather than being deleted with the rest, because
-# //build/config/pch.gni reads it: removing the line would leave that file
-# referring to an undefined identifier.
-use_clang_modules = false
+# What the flag was believed to cost was checked and was nothing to this build:
+# neither //build/config/compiler:compiler_deterministic nor :libcxx_module appears
+# among the reachable targets, and precompiled headers are already off through
+# is_official_build. What it does reach is the libc++ modulemap, which is why the
+# flag cannot go even though nothing reads the configs it feeds.
+#
+# The per-platform files under //build/modules were a different matter, and they
+# are gone: with use_unified_system_module on, the only module target anything
+# reaches is //build/modules:system.
 
 # The target that makes the experimental Desktop Android build, and so the
 # reason there is an extensions system to expose. Stated rather than left to the
