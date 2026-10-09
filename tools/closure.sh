@@ -285,7 +285,14 @@ for name in absent[:10]:
 
 # A file DEPS names and the tree does not hold makes gclient unable to parse
 # DEPS, so this is checked the way the BUILD files are: by name.
-print("%d files DEPS names in this repository, %d of them outside the closure"
+#
+# These are inside the closure, by construction, since the closure is the union of
+# all three sets. Saying otherwise, which an earlier version of this line did,
+# describes them as absent from the very set they are being added to. What
+# distinguishes them is that neither gn nor the build reads them, and gclient opens
+# them while parsing DEPS before either of them runs.
+print("%d files DEPS names in this repository, %d of them read by neither gn nor "
+      "the build and kept only because DEPS opens them"
       % (len(deps_refs), len(deps_lost)))
 for name in deps_lost[:10]:
     print("    absent: %s" % name)
