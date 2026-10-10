@@ -8,6 +8,12 @@ android_library("java") {
   visibility = [
     ":*",
     "../test:*",
+    # The factory is compiled from a source file in this directory, so it already
+    # depends on the code here; it could not say so until turbine needed a type
+    # from it to name in the stub it generates. Visibility is a statement about
+    # what is allowed to use this library, and the file generating stubs for this
+    # library's factory is inside the library.
+    "../android:factory_java",
     "//chrome/android:chrome_all_java",
     "//chrome/browser/touch_to_fill/common/android:junit",
   ]
