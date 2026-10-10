@@ -7,15 +7,28 @@ name: build
 # a larger runner and left alone for hours, which is not something to ask of a
 # job whose result is three numbers.
 #
-# Deliberately manual. A build costs hours of runner time and produces nothing
-# new unless the pinned revision, the patch series or the configuration changed,
-# so it runs when asked rather than on every push.
+# Deliberately not on every push. A build costs hours of runner time and
+# produces nothing new unless the pinned revision, the patch series or the
+# configuration changed, so it runs when asked.
+#
+# Nightly as well, because the point of it today is not the APK but the size of
+# the gap: this tree is being made smaller, and the size it needs to build is
+# the figure that has to come down. A nightly measurement of a number that moves
+# says where it got to without anyone having to remember to ask.
 #
 # The work itself lives in tools/, so the same commands run unchanged on a build
 # machine over SSH. This workflow only prepares a machine and calls them.
-
 on:
   workflow_dispatch:
+    inputs:
+      runner:
+        description: 'Runner label. A standard one cannot hold a Chromium build.'
+        required: false
+        default: 'ubuntu-latest'
+  schedule:
+    # Off the hour and off the half hour, because that is when every scheduled
+    # job in the world is queued and the queue is deepest.
+    - cron: '37 4 * * *'
 
 concurrency:
   group: ${{ github.workflow }}
@@ -27,15 +40,38 @@ jobs:
     # fit in 14 GB, so on a standard runner this fails at the fetch stage. Move
     # it by changing this label alone; nothing else needs to change. What a
     # build actually costs is in the table in README.md.
-    runs-on: ubuntu-latest
+    #
+    # Settable from the dispatch form so that moving to a larger runner needs no
+    # commit. The label is the only thing about the machine a Chromium build
+    # cares about, and a value hard written here means every move between
+    # machines is a change to the repository.
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
 
     # Above the 6-hour ceiling GitHub-hosted runners impose, so that a larger
     # runner configured for a long build is not cut off. On a standard runner
     # the job fails on disk long before this matters.
     timeout-minutes: 360
 
-
     steps:
+      # What this machine actually has, printed before anything is fetched.
+      #
+      # The build's binding constraint is disk, and the standard runner does not
+      # have enough of it, so this job on a standard runner is a measurement
+      # rather than a build: it establishes how far from a build the tree still
+      # is. Saying that once, with numbers, is more useful than failing at the
+      # fetch with ENOSPC twenty minutes later and leaving the size of the gap
+      # to be guessed at.
+      - name: What this machine has
+        run: |
+          {
+            echo "## The machine"
+            echo
+            echo "free disk on the workspace: $(df -h --output=avail "$GITHUB_WORKSPACE" | tail -1 | tr -d ' ')"
+            echo "total disk on the workspace: $(df -h --output=size "$GITHUB_WORKSPACE" | tail -1 | tr -d ' ')"
+            echo "memory: $(free -h | awk '/^Mem:/ {print $2" total, "$7" available"}')"
+            echo "cpus: $(nproc)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       # Recover disk before anything else, including the checkout. This
       # repository is 5.5 GB across 509 570 files, so the checkout itself needs
       # room; freeing space after it would mean freeing it once the disk is
@@ -49,6 +85,7 @@ jobs:
         run: |
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /usr/local/lib/android /usr/local/lib/heroku /opt/hostedtoolcache "$AGENT_TOOLSDIRECTORY"
           df -h /
+          echo "after freeing: $(df -h --output=avail "$GITHUB_WORKSPACE" | tail -1 | tr -d ' ') free"
 
       # A shallow clone, stated rather than left to the default: the history of
       # an imported Chromium tree is large and this job builds a checkout, not a
@@ -91,13 +128,57 @@ jobs:
       # The main repository alone is not a buildable tree. This is what puts the
       # NDK, android_deps and the toolchain in place, and it is the step that was
       # missing, which is why the workflow referenced a tool that never existed.
+      # Not allowed to fail the job. On a runner with 14 GB the fetch alone runs
+      # the disk out, and a nightly probe that goes red every morning is a red
+      # that stops being read, which is worse than no signal. A failure here means
+      # the tree does not fit this machine, and that is a fact to publish rather
+      # than an alarm to raise.
       - name: Fetch dependencies
+        id: fetch
         working-directory: src
+        continue-on-error: true
         run: ./tools/fetch-deps.sh
 
+      # Same reasoning. Whether the build ran is decided by whether an APK came
+      # out, which is what the summary reports, rather than by the exit status of
+      # a step that cannot succeed on the runner most likely to be used.
+      #
+      # Output is kept because tools/build.sh reports the peak disk the build
+      # needed, and that figure is the one number this job exists to produce
+      # while the tree is still too large to build here. It goes to a file
+      # outside the checkout, which is what the summary step reads: the checkout
+      # is the tree gn measures, and a report left inside it would be a file in
+      # the measurement that nothing builds.
       - name: Build
+        id: build
         working-directory: src
-        run: ./tools/build.sh
+        continue-on-error: true
+        run: ./tools/build.sh 2>&1 | tee "$RUNNER_TEMP/build.log"
+
+      - name: What this build cost, and what it means
+        if: always()
+        working-directory: src
+        run: |
+          {
+            echo "## The build"
+            echo
+            apk=$(ls out/Charm/apks/*.apk 2>/dev/null | head -1 || true)
+            if [ -n "$apk" ]; then
+              echo "built: \`$apk\`"
+              echo
+              ls -la "$apk"
+            else
+              echo "no APK. The build did not finish on this machine."
+            fi
+            echo
+            echo "peak disk used, as reported by the build:"
+            if [ -f "$RUNNER_TEMP/build.log" ]; then
+              grep -a 'peak disk used' "$RUNNER_TEMP/build.log" || \
+                echo "the build stopped before it could report a figure"
+            else
+              echo "the fetch never finished, so the build never started"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
         if: always()
