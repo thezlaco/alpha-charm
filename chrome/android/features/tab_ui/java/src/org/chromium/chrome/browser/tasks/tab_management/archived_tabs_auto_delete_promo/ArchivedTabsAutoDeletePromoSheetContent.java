@@ -35,11 +35,6 @@ public class ArchivedTabsAutoDeletePromoSheetContent implements BottomSheetConte
     }
 
     @Override
-    public int getPriority() {
-        return BottomSheetContent.ContentPriority.HIGH;
-    }
-
-    @Override
     public void onBackPressed() {
         handleBackPress();
     }

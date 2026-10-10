@@ -44,11 +44,6 @@ public class GroupSuggestionsBottomSheetContent implements BottomSheetContent {
     }
 
     @Override
-    public int getPriority() {
-        return ContentPriority.HIGH;
-    }
-
-    @Override
     public float getFullHeightRatio() {
         return HeightMode.WRAP_CONTENT;
     }

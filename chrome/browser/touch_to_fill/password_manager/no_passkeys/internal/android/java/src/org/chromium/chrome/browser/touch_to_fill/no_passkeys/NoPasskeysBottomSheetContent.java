@@ -112,11 +112,6 @@ class NoPasskeysBottomSheetContent implements BottomSheetContent {
     }
 
     @Override
-    public int getPriority() {
-        return ContentPriority.HIGH;
-    }
-
-    @Override
     public boolean swipeToDismissEnabled() {
         return true;
     }

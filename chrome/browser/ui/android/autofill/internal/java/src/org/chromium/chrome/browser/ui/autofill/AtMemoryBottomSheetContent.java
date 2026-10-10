@@ -34,11 +34,6 @@ class AtMemoryBottomSheetContent implements BottomSheetContent {
     }
 
     @Override
-    public int getPriority() {
-        return BottomSheetContent.ContentPriority.HIGH;
-    }
-
-    @Override
     public boolean hasCustomScrimLifecycle() {
         return false;
     }

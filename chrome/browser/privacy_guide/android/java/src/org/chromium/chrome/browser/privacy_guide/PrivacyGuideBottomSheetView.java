@@ -48,11 +48,6 @@ public class PrivacyGuideBottomSheetView implements BottomSheetContent {
     }
 
     @Override
-    public int getPriority() {
-        return BottomSheetContent.ContentPriority.HIGH;
-    }
-
-    @Override
     public float getHalfHeightRatio() {
         return mHalfHeight;
     }

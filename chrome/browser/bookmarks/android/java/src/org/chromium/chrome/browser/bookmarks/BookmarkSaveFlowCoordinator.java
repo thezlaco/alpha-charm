@@ -297,11 +297,6 @@ public class BookmarkSaveFlowCoordinator implements ActivityStateListener {
         }
 
         @Override
-        public int getPriority() {
-            return BottomSheetContent.ContentPriority.HIGH;
-        }
-
-        @Override
         public float getFullHeightRatio() {
             return BottomSheetContent.HeightMode.WRAP_CONTENT;
         }

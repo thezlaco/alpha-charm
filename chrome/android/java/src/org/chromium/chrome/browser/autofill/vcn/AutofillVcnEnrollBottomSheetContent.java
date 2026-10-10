@@ -52,11 +52,6 @@ import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
     }
 
     @Override
-    public int getPriority() {
-        return ContentPriority.HIGH;
-    }
-
-    @Override
     public boolean hasCustomLifecycle() {
         return true;
     }

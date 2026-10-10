@@ -153,7 +153,9 @@ public interface BottomSheetContent {
      * @return The priority of this content.
      */
     @ContentPriority
-    int getPriority();
+    default int getPriority() {
+        return ContentPriority.HIGH;
+    }
 
     /**
      * @return Whether swiping the sheet down hard enough will cause the sheet to be dismissed.

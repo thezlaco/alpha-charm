@@ -64,11 +64,6 @@ import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
     }
 
     @Override
-    public int getPriority() {
-        return ContentPriority.HIGH;
-    }
-
-    @Override
     public String getSheetContentDescription(Context context) {
         return context.getString(
                 R.string.secure_payment_confirmation_authentication_sheet_description);

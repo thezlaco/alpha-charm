@@ -210,11 +210,6 @@ public class AccountSelectionBottomSheetContent implements BottomSheetContent {
     }
 
     @Override
-    public int getPriority() {
-        return BottomSheetContent.ContentPriority.HIGH;
-    }
-
-    @Override
     public boolean canBeSuppressed(BottomSheetContent nextContent) {
         // Allow higher priority content to suppress the FedCM bottom sheet.
         return nextContent.getPriority() < getPriority();

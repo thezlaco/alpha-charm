@@ -108,11 +108,6 @@ class DevicePickerBottomSheetContent implements BottomSheetContent, OnItemClickL
     }
 
     @Override
-    public int getPriority() {
-        return BottomSheetContent.ContentPriority.HIGH;
-    }
-
-    @Override
     public boolean swipeToDismissEnabled() {
         // This ensures that the bottom sheet reappears after the first time. Otherwise, the
         // second time that a user initiates a share, the bottom sheet does not re-appear.

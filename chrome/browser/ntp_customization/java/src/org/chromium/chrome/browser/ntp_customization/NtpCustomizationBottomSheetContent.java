@@ -82,11 +82,6 @@ public class NtpCustomizationBottomSheetContent implements BottomSheetContent {
     }
 
     @Override
-    public int getPriority() {
-        return BottomSheetContent.ContentPriority.HIGH;
-    }
-
-    @Override
     public boolean swipeToDismissEnabled() {
         return false;
     }

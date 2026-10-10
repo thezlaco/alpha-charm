@@ -41,11 +41,6 @@ public class PriceInsightsBottomSheetContent implements BottomSheetContent {
     }
 
     @Override
-    public int getPriority() {
-        return ContentPriority.HIGH;
-    }
-
-    @Override
     public float getHalfHeightRatio() {
         return HeightMode.DISABLED;
     }

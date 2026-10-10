@@ -47,11 +47,6 @@ public class SavePasswordsInstructionalBottomSheetContent implements BottomSheet
     }
 
     @Override
-    public int getPriority() {
-        return BottomSheetContent.ContentPriority.HIGH;
-    }
-
-    @Override
     public boolean swipeToDismissEnabled() {
         return false;
     }
