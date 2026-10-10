@@ -108,29 +108,12 @@ public class TabGroupUiCoordinator implements TabGroupUiMediator.ResetHandler, T
     private @Nullable TabGroupUiMediator mMediator;
     private @Nullable TabBubbler mTabBubbler;
 
-    /** Creates a new {@link TabGroupUiCoordinator} */
-    public TabGroupUiCoordinator(
-            Activity activity,
-            ViewGroup parentView,
-            BrowserControlsStateProvider browserControlsStateProvider,
-            ScrimManager scrimManager,
-            NonNullObservableSupplier<Boolean> omniboxFocusStateSupplier,
-            BottomSheetController bottomSheetController,
-            DataSharingTabManager dataSharingTabManager,
-            TabModelSelector tabModelSelector,
-            TabContentManager tabContentManager,
-            TabCreatorManager tabCreatorManager,
-            OneshotSupplier<LayoutStateProvider> layoutStateProviderSupplier,
-            ModalDialogManager modalDialogManager,
-            ThemeColorProvider themeColorProvider,
-            UndoBarThrottle undoBarThrottle,
-            MonotonicObservableSupplier<TabBookmarker> tabBookmarkerSupplier,
-            Supplier<@Nullable ShareDelegate> shareDelegateSupplier) {
+    public TabGroupUiCoordinator(TabGroupUiParams params) {
         try (TraceEvent e = TraceEvent.scoped("TabGroupUiCoordinator.constructor")) {
-            mActivity = activity;
-            mBrowserControlsStateProvider = browserControlsStateProvider;
-            mScrimManager = scrimManager;
-            mOmniboxFocusStateSupplier = omniboxFocusStateSupplier;
+            mActivity = params.activity;
+            mBrowserControlsStateProvider = params.browserControlsStateProvider;
+            mScrimManager = params.scrimManager;
+            mOmniboxFocusStateSupplier = params.omniboxFocusStateSupplier;
             mModel = new PropertyModel(TabGroupUiProperties.ALL_KEYS);
 
             @LayoutRes
@@ -140,20 +123,21 @@ public class TabGroupUiCoordinator implements TabGroupUiMediator.ResetHandler, T
                             : R.layout.bottom_tab_strip_toolbar;
             mToolbarView =
                     (TabGroupUiToolbarView)
-                            LayoutInflater.from(activity).inflate(layoutId, parentView, false);
+                            LayoutInflater.from(params.activity)
+                                    .inflate(layoutId, params.parentView, false);
             mTabListContainerView = mToolbarView.getViewContainer();
-            mBottomSheetController = bottomSheetController;
-            mDataSharingTabManager = dataSharingTabManager;
-            mTabModelSelector = tabModelSelector;
-            mLayoutStateProviderSupplier = layoutStateProviderSupplier;
-            mTabCreatorManager = tabCreatorManager;
-            mTabContentManager = tabContentManager;
-            mModalDialogManager = modalDialogManager;
-            mThemeColorProvider = themeColorProvider;
-            mUndoBarThrottle = undoBarThrottle;
-            mTabBookmarkerSupplier = tabBookmarkerSupplier;
-            mShareDelegateSupplier = shareDelegateSupplier;
-            parentView.addView(mToolbarView);
+            mBottomSheetController = params.bottomSheetController;
+            mDataSharingTabManager = params.dataSharingTabManager;
+            mTabModelSelector = params.tabModelSelector;
+            mLayoutStateProviderSupplier = params.layoutStateProviderSupplier;
+            mTabCreatorManager = params.tabCreatorManager;
+            mTabContentManager = params.tabContentManager;
+            mModalDialogManager = params.modalDialogManager;
+            mThemeColorProvider = params.themeColorProvider;
+            mUndoBarThrottle = params.undoBarThrottle;
+            mTabBookmarkerSupplier = params.tabBookmarkerSupplier;
+            mShareDelegateSupplier = params.shareDelegateSupplier;
+            params.parentView.addView(mToolbarView);
         }
     }
 

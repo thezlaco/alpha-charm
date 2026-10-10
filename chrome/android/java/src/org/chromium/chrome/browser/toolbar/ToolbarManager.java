@@ -2453,21 +2453,23 @@ public class ToolbarManager
                 new TabGroupUiOneshotSupplier(
                         mActivityTabProvider,
                         mTabModelSelector,
-                        mActivity,
-                        tabGroupUiContainer.findViewById(R.id.bottom_container_slot),
-                        mBrowserControlsSizer,
-                        mScrimManager,
-                        mOmniboxFocusStateSupplier,
-                        mBottomSheetController,
-                        mDataSharingTabManager,
-                        mTabContentManager,
-                        mTabCreatorManager,
-                        mLayoutStateProviderSupplier,
-                        mModalDialogManagerSupplier.get(),
-                        mBottomUiThemeColorProvider,
-                        mUndoBarThrottle,
-                        mTabBookmarkerSupplier,
-                        mShareDelegateSupplier);
+                        new TabGroupUiParams(
+                                mActivity,
+                                tabGroupUiContainer.findViewById(R.id.bottom_container_slot),
+                                mBrowserControlsSizer,
+                                mScrimManager,
+                                mOmniboxFocusStateSupplier,
+                                mBottomSheetController,
+                                mDataSharingTabManager,
+                                mTabModelSelector,
+                                mTabContentManager,
+                                mTabCreatorManager,
+                                mLayoutStateProviderSupplier,
+                                mModalDialogManagerSupplier.get(),
+                                mBottomUiThemeColorProvider,
+                                mUndoBarThrottle,
+                                mTabBookmarkerSupplier,
+                                mShareDelegateSupplier));
         var tabGroupUiBottomControlsCoordinator =
                 new BottomControlsCoordinator(
                         mWindowAndroid,

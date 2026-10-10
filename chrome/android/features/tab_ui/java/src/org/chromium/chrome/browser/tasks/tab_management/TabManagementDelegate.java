@@ -8,7 +8,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.util.Pair;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
 
 import org.chromium.base.supplier.LazyOneshotSupplier;
 import org.chromium.base.supplier.MonotonicObservableSupplier;
@@ -37,7 +36,6 @@ import org.chromium.chrome.browser.tabmodel.TabCreatorManager;
 import org.chromium.chrome.browser.tabmodel.TabModel;
 import org.chromium.chrome.browser.tabmodel.TabModelSelector;
 import org.chromium.chrome.browser.tasks.tab_management.archived_tabs_auto_delete_promo.ArchivedTabsAutoDeletePromoManager;
-import org.chromium.chrome.browser.theme.ThemeColorProvider;
 import org.chromium.chrome.browser.ui.edge_to_edge.EdgeToEdgeController;
 import org.chromium.chrome.browser.ui.messages.snackbar.SnackbarManager;
 import org.chromium.chrome.browser.undo_tab_close_snackbar.UndoBarThrottle;
@@ -57,44 +55,12 @@ public interface TabManagementDelegate {
     /**
      * Create the {@link TabGroupUi}.
      *
-     * @param activity The {@link Activity} that creates this surface.
-     * @param parentView The parent view of this UI.
-     * @param browserControlsStateProvider The {@link BrowserControlsStateProvider} of the top
-     *     controls.
-     * @param scrimManager The {@link ScrimManager} to control scrim view.
-     * @param omniboxFocusStateSupplier Supplier to access the focus state of the omnibox.
-     * @param bottomSheetController The {@link BottomSheetController} for the current activity.
-     * @param dataSharingTabManager The {@link} DataSharingTabManager managing communication between
-     *     UI and DataSharing services.
-     * @param tabModelSelector Gives access to the current set of {@link TabModel}.
-     * @param tabContentManager Gives access to the tab content.
-     * @param tabCreatorManager Manages creation of tabs.
-     * @param layoutStateProviderSupplier Supplies the {@link LayoutStateProvider}.
-     * @param modalDialogManager Used to show confirmation dialogs.
-     * @param themeColorProvider Used to provide the theme.
-     * @param undoBarThrottle Used to suppress the undo bar.
-     * @param shareDelegateSupplier Supplies the {@link ShareDelegate} that will be used to share
-     *     the tab's URL when the user selects the "Share" option.
-     * @param tabBookmarkerSupplier Supplier of {@link TabBookmarker} for bookmarking a given tab.
+     * @param params What the surface attaches to, and how it behaves. Named rather than positional
+     *     because there were sixteen of them, repeated in this interface, in the implementation, in
+     *     the constructor of the supplier that passes them on, and in the call that builds it.
      * @return The {@link TabGroupUi}.
      */
-    TabGroupUi createTabGroupUi(
-            Activity activity,
-            ViewGroup parentView,
-            BrowserControlsStateProvider browserControlsStateProvider,
-            ScrimManager scrimManager,
-            NonNullObservableSupplier<Boolean> omniboxFocusStateSupplier,
-            BottomSheetController bottomSheetController,
-            DataSharingTabManager dataSharingTabManager,
-            TabModelSelector tabModelSelector,
-            TabContentManager tabContentManager,
-            TabCreatorManager tabCreatorManager,
-            OneshotSupplier<LayoutStateProvider> layoutStateProviderSupplier,
-            ModalDialogManager modalDialogManager,
-            ThemeColorProvider themeColorProvider,
-            UndoBarThrottle undoBarThrottle,
-            MonotonicObservableSupplier<TabBookmarker> tabBookmarkerSupplier,
-            Supplier<@Nullable ShareDelegate> shareDelegateSupplier);
+    TabGroupUi createTabGroupUi(TabGroupUiParams params);
 
     /**
      * Create a {@link TabSwitcher} and {@link Pane} for the Hub.

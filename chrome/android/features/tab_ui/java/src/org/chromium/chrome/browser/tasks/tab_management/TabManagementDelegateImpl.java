@@ -11,7 +11,6 @@ import android.content.Context;
 import android.os.Handler;
 import android.util.Pair;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
 
 import org.chromium.base.ContextUtils;
 import org.chromium.base.supplier.LazyOneshotSupplier;
@@ -47,7 +46,6 @@ import org.chromium.chrome.browser.tabmodel.TabCreatorManager;
 import org.chromium.chrome.browser.tabmodel.TabModel;
 import org.chromium.chrome.browser.tabmodel.TabModelSelector;
 import org.chromium.chrome.browser.tasks.tab_management.archived_tabs_auto_delete_promo.ArchivedTabsAutoDeletePromoManager;
-import org.chromium.chrome.browser.theme.ThemeColorProvider;
 import org.chromium.chrome.browser.ui.edge_to_edge.EdgeToEdgeController;
 import org.chromium.chrome.browser.ui.messages.snackbar.SnackbarManager;
 import org.chromium.chrome.browser.undo_tab_close_snackbar.UndoBarThrottle;
@@ -67,40 +65,8 @@ import java.util.function.Supplier;
 @NullMarked
 public class TabManagementDelegateImpl implements TabManagementDelegate {
     @Override
-    public TabGroupUi createTabGroupUi(
-            Activity activity,
-            ViewGroup parentView,
-            BrowserControlsStateProvider browserControlsStateProvider,
-            ScrimManager scrimManager,
-            NonNullObservableSupplier<Boolean> omniboxFocusStateSupplier,
-            BottomSheetController bottomSheetController,
-            DataSharingTabManager dataSharingTabManager,
-            TabModelSelector tabModelSelector,
-            TabContentManager tabContentManager,
-            TabCreatorManager tabCreatorManager,
-            OneshotSupplier<LayoutStateProvider> layoutStateProviderSupplier,
-            ModalDialogManager modalDialogManager,
-            ThemeColorProvider themeColorProvider,
-            UndoBarThrottle undoBarThrottle,
-            MonotonicObservableSupplier<TabBookmarker> tabBookmarkerSupplier,
-            Supplier<@Nullable ShareDelegate> shareDelegateSupplier) {
-        return new TabGroupUiCoordinator(
-                activity,
-                parentView,
-                browserControlsStateProvider,
-                scrimManager,
-                omniboxFocusStateSupplier,
-                bottomSheetController,
-                dataSharingTabManager,
-                tabModelSelector,
-                tabContentManager,
-                tabCreatorManager,
-                layoutStateProviderSupplier,
-                modalDialogManager,
-                themeColorProvider,
-                undoBarThrottle,
-                tabBookmarkerSupplier,
-                shareDelegateSupplier);
+    public TabGroupUi createTabGroupUi(TabGroupUiParams params) {
+        return new TabGroupUiCoordinator(params);
     }
 
     @Override
